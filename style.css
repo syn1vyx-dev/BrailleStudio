@@ -1,60 +1,511 @@
+* {
+    box-sizing: border-box;
+}
+
+
 body {
     margin: 0;
-    background: #111;
-    color: white;
-    font-family: Arial, sans-serif;
+    background: #0d0d0f;
+    color: #f5f5f5;
+    font-family:
+        Inter,
+        Segoe UI,
+        Arial,
+        sans-serif;
+
+    overflow: hidden;
 }
 
 
-header {
-    padding: 20px;
-    background: #181818;
-}
+
+/* =========================
+   TOP BAR
+========================= */
 
 
-.editor {
+.topbar {
+
+    height: 70px;
+
     display: flex;
-    gap: 30px;
-    padding: 30px;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 0 25px;
+
+    background: #151515;
+
+    border-bottom: 1px solid #333;
+
 }
 
 
-.panel {
-    background: #222;
+
+.topbar h1 {
+
+    margin: 0;
+
+    font-size: 24px;
+
+}
+
+
+
+.controls {
+
+    display: flex;
+
+    gap: 10px;
+
+}
+
+
+
+
+
+button {
+
+    background: #252525;
+
+    color: white;
+
+    border: 1px solid #444;
+
+    border-radius: 6px;
+
+    padding: 8px 14px;
+
+    cursor: pointer;
+
+    transition: 0.15s;
+
+}
+
+
+
+button:hover {
+
+    background: #333;
+
+}
+
+
+
+button:active {
+
+    transform: scale(0.96);
+
+}
+
+
+
+
+
+/* =========================
+   MAIN APP
+========================= */
+
+
+.app {
+
+    display: grid;
+
+    grid-template-columns:
+        220px
+        1fr
+        280px;
+
+
+    height: calc(100vh - 70px);
+
+}
+
+
+
+
+/* =========================
+   SIDEBAR
+========================= */
+
+
+.sidebar {
+
+    background: #131313;
+
+    border-right: 1px solid #333;
+
     padding: 20px;
-    border-radius: 12px;
+
 }
+
+
+
+.sidebar h2 {
+
+    margin-top: 0;
+
+}
+
+
+
+.sidebar h3 {
+
+    margin-top: 25px;
+
+}
+
+
+
+.sidebar button {
+
+    width: 100%;
+
+    margin-bottom: 10px;
+
+}
+
+
+
+.tool.active {
+
+    background: #555;
+
+}
+
+
+
+
+hr {
+
+    border: none;
+
+    border-top: 1px solid #333;
+
+    margin: 20px 0;
+
+}
+
+
+
+
+
+/* =========================
+   WORKSPACE
+========================= */
+
+
+.workspace {
+
+    display: flex;
+
+    flex-direction: column;
+
+    min-width: 0;
+
+}
+
+
+
+
+
+.canvas-panel {
+
+    flex: 1;
+
+    padding: 25px;
+
+    overflow: auto;
+
+}
+
+
+
+
+
+/* =========================
+   BRAILLE CANVAS
+========================= */
 
 
 .braille-grid {
+
     display: grid;
-    grid-template-columns: repeat(4, 100px);
+
+    grid-template-columns:
+        repeat(8, 90px);
+
+
     gap: 20px;
+
 }
+
 
 
 .cell {
+
     display: grid;
-    grid-template-columns: repeat(2, 35px);
-    grid-template-rows: repeat(4, 35px);
-    gap: 5px;
+
+    grid-template-columns:
+        repeat(2, 35px);
+
+
+    grid-template-rows:
+        repeat(4, 35px);
+
+
+    gap: 6px;
+
+
+    padding: 10px;
+
+
+    background: #181818;
+
+    border-radius: 10px;
+
 }
+
+
 
 
 .dot {
+
     width: 35px;
+
     height: 35px;
-    background: #444;
+
     border-radius: 50%;
-    cursor: pointer;
+
+
+    background: #383838;
+
+
+    cursor: crosshair;
+
 }
+
+
+
+
+
+.dot:hover {
+
+    background: #666;
+
+}
+
+
 
 
 .dot.active {
+
     background: white;
+
+    box-shadow:
+        0 0 10px white;
+
 }
 
 
-#preview {
+
+
+
+/* =========================
+   TIMELINE
+========================= */
+
+
+.timeline-panel {
+
+    height: 170px;
+
+    background: #151515;
+
+    border-top: 1px solid #333;
+
+    padding: 15px;
+
+}
+
+
+
+.timeline-header {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+}
+
+
+
+.timeline-header h2 {
+
+    margin: 0;
+
+}
+
+
+
+
+#fps {
+
+    width: 60px;
+
+    background: #222;
+
+    color: white;
+
+    border: 1px solid #444;
+
+    padding: 5px;
+
+}
+
+
+
+
+.timeline {
+
+    display: flex;
+
+    gap: 10px;
+
+    margin-top: 15px;
+
+    overflow-x: auto;
+
+}
+
+
+
+
+
+.frame {
+
+    width: 90px;
+
+    height: 70px;
+
+
+    background: #222;
+
+    border: 2px solid #444;
+
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+
+    border-radius: 8px;
+
+    cursor: pointer;
+
+}
+
+
+
+
+.frame.active {
+
+    border-color: white;
+
+}
+
+
+
+
+
+/* =========================
+   PREVIEW
+========================= */
+
+
+.preview-panel {
+
+    background: #131313;
+
+    border-left: 1px solid #333;
+
+    padding: 20px;
+
+}
+
+
+
+.preview {
+
+    height: 180px;
+
+
+    background: black;
+
+
+    border-radius: 10px;
+
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+
     font-size: 100px;
+
+
+    margin-top: 20px;
+
+}
+
+
+
+
+.status {
+
+    margin-top: 20px;
+
+    color: #aaa;
+
+}
+
+
+
+
+
+
+/* =========================
+   SCROLLBARS
+========================= */
+
+
+::-webkit-scrollbar {
+
+    width: 8px;
+
+    height: 8px;
+
+}
+
+
+
+::-webkit-scrollbar-track {
+
+    background: #111;
+
+}
+
+
+
+::-webkit-scrollbar-thumb {
+
+    background: #444;
+
+    border-radius: 10px;
+
 }
