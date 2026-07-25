@@ -1,20 +1,35 @@
-<!DOCTYPE html><html><head><meta charset="utf-8"><title>Braille Studio</title><style>
-body{margin:0;background:#0d1117;color:#fff;font-family:Arial;display:grid;grid-template-columns:220px 1fr 280px;height:100vh}
-aside,main,nav{padding:16px;border-right:1px solid #333}nav{border-left:1px solid #333;border-right:0}
-#grid{display:grid;grid-template-columns:repeat(2,80px);grid-template-rows:repeat(4,80px);gap:10px;justify-content:center}
-.dot{width:80px;height:80px;border-radius:50%;background:#222;border:2px solid #444}.on{background:#58a6ff}
-.frame{display:inline-flex;width:40px;height:40px;align-items:center;justify-content:center;border:1px solid #444;margin:2px;cursor:pointer}
-button{margin:4px}
-textarea{width:100%;height:250px}
-</style></head><body><aside><h2>Braille Studio</h2></aside><main><div id="grid"></div><div><button onclick="addFrame()">New</button><button onclick="dup()">Dup</button><button onclick="exp()">Export</button></div><div id="timeline"></div></main><nav><textarea id="out"></textarea></nav>
-<script>
-let frames=[0],cur=0,b=[1,8,2,16,4,32,64,128];
-const g=document.getElementById("grid");
-for(let i=0;i<8;i++){let d=document.createElement("div");d.className="dot";d.onclick=()=>{frames[cur]^=b[i];r()};g.appendChild(d);}
-function ch(v){return String.fromCodePoint(0x2800+v)}
-function r(){[...g.children].forEach((e,i)=>e.classList.toggle("on",(frames[cur]&b[i])));let t=document.getElementById("timeline");t.innerHTML="";frames.forEach((f,i)=>{let x=document.createElement("div");x.className="frame";x.textContent=i+1;x.onclick=()=>{cur=i;r()};if(i==cur)x.style.outline="2px solid #58a6ff";t.appendChild(x);});}
-function addFrame(){frames.push(0);cur=frames.length-1;r()}
-function dup(){frames.splice(cur+1,0,frames[cur]);cur++;r()}
-function exp(){out.value='public static final String[] ANIMATION = {'+frames.map(f=>'"'+ch(f)+'"').join(", ")+'};'}
-r();
-</script></body></html>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Braille Studio</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<header>
+    <h1>Braille Studio</h1>
+    <p>Braille animation editor</p>
+</header>
+
+
+<div class="editor">
+
+    <div class="panel">
+        <h2>Canvas</h2>
+        <div class="grid"></div>
+    </div>
+
+
+    <div class="panel">
+        <h2>Preview</h2>
+        <h1>⠿</h1>
+    </div>
+
+</div>
+
+
+<script src="script.js"></script>
+
+</body>
+</html>
