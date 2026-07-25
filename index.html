@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,134 +9,91 @@
 <link rel="stylesheet" href="style.css">
 </head>
 
-
 <body>
 
-
 <header class="topbar">
-
     <div class="logo">
-        ⠃⠗⠁⠊⠇⠇⠑ Studio
+        ⠿ Braille Studio
     </div>
 
-
-    <div class="toolbar">
-
-        <button id="undoBtn">↶</button>
-        <button id="redoBtn">↷</button>
-
-        <button id="clearBtn">
-            Clear
-        </button>
-
-        <button id="playBtn">
-            ▶ Play
-        </button>
-
-
-        <label>
-            FPS
-            <input id="fpsInput" type="number" value="12">
-        </label>
-
+    <div class="top-actions">
+        <button id="btn-save">Save</button>
+        <button id="btn-load">Load</button>
+        <button id="btn-import">Import</button>
     </div>
-
 </header>
 
 
+<div class="workspace">
 
 
+<!-- LEFT SIDEBAR -->
 
-<div class="layout">
+<aside class="sidebar left">
 
+<h3>Canvas</h3>
 
-<!-- LEFT -->
+<label>
+Characters Wide
+<input id="cell-cols" type="number" min="1" value="2">
+</label>
 
-<aside class="sidebar">
-
-
-<h2>Tools</h2>
-
-
-<button id="pencilBtn" class="tool active">
-✏ Pencil
-</button>
-
-
-<button id="eraserBtn" class="tool">
-🧽 Eraser
-</button>
-
+<label>
+Characters Tall
+<input id="cell-rows" type="number" min="1" value="1">
+</label>
 
 
 <hr>
 
 
+<h3>Tools</h3>
 
-<h2>Canvas</h2>
+<div class="tool-grid">
 
-
-<label>
-Width
-
-<input
-id="widthInput"
-type="number"
-value="16"
-min="1"
-max="50">
-
-</label>
-
-
-
-<label>
-Height
-
-<input
-id="heightInput"
-type="number"
-value="4"
-min="1"
-max="20">
-
-</label>
-
-
-
-<button id="resizeBtn">
-Resize
+<button class="mode-btn active" data-mode="draw">
+Draw
 </button>
 
+<button class="mode-btn" data-mode="erase">
+Erase
+</button>
+
+<button class="mode-btn" data-mode="line">
+Line
+</button>
+
+<button class="mode-btn" data-mode="rect">
+Rectangle
+</button>
+
+</div>
 
 
 <hr>
 
 
+<button id="btn-fill">
+Fill
+</button>
 
-<h2>Files</h2>
+<button id="btn-invert">
+Invert
+</button>
 
-
-<button id="copyBtn">
-Copy Braille
+<button id="btn-clear">
+Clear
 </button>
 
 
-<button id="saveBtn">
-Save Project
+<hr>
+
+
+<h3>Effects</h3>
+
+<button id="btn-onion">
+Onion Skin
 </button>
-
-
-<button id="loadBtn">
-Load Project
-</button>
-
-
-<input
-id="fileInput"
-type="file"
-accept=".json"
-hidden>
 
 
 </aside>
@@ -145,72 +101,102 @@ hidden>
 
 
 
+<!-- MAIN EDITOR -->
+
+<main class="editor">
 
 
+<div class="editor-header">
 
+<div id="grid-label">
+8 × 4 pixels — 2 chars
+</div>
 
-<!-- CENTER -->
-
-<main class="workspace">
-
-
-<section class="canvas-area">
-
-
-<h2>
-Editor
-</h2>
-
-
-<div
-id="canvas"
-class="braille-canvas">
 </div>
 
 
-</section>
+
+<div id="dot-grid"></div>
 
 
 
-
-
-
-<section class="timeline-area">
+<section class="timeline">
 
 
 <div class="timeline-header">
 
-<h2>
+<h3>
 Timeline
-</h2>
-
+</h3>
 
 <div>
 
-<button id="addFrameBtn">
+<button id="btn-prev-frame">
+◀
+</button>
+
+<span id="frame-counter">
+1 / 1
+</span>
+
+<button id="btn-next-frame">
+▶
+</button>
+
+</div>
+
+</div>
+
+
+<div id="frame-strip"></div>
+
+
+<div class="timeline-controls">
+
+<button id="btn-new-frame">
 + Frame
 </button>
 
-<button id="duplicateBtn">
+<button id="btn-dup-frame">
 Duplicate
 </button>
 
-
-<button id="deleteFrameBtn">
+<button id="btn-del-frame">
 Delete
 </button>
 
 
-</div>
+<button id="btn-play">
+▶ Play
+</button>
 
 
-</div>
+<label>
+FPS
+
+<input 
+id="fps-slider"
+type="range"
+min="1"
+max="30"
+value="4">
+
+<span id="fps-value">
+4
+</span>
+
+</label>
 
 
+<button id="btn-loop">
+Loop
+</button>
 
-<div
-id="timeline"
-class="timeline">
+<button id="btn-bounce">
+Bounce
+</button>
+
+
 </div>
 
 
@@ -225,48 +211,167 @@ class="timeline">
 
 
 
+<!-- RIGHT SIDEBAR -->
+
+<aside class="sidebar right">
+
+
+<h3>Output</h3>
+
+
+<select id="anim-format">
+
+<option value="js-braille">
+JavaScript Braille
+</option>
+
+<option value="js-termdot">
+TermDot
+</option>
+
+<option value="js-grid">
+Grid JSON
+</option>
+
+<option value="json">
+JSON
+</option>
+
+<option value="python">
+Python
+</option>
+
+<option value="rust">
+Rust
+</option>
+
+<option value="c">
+C
+</option>
+
+</select>
 
 
 
-<!-- RIGHT -->
+<div class="output-box">
 
-<aside class="preview-panel">
+<h4>
+Braille
+</h4>
 
+<button 
+class="copy-btn"
+data-target="out-braille">
+Copy
+</button>
 
-<h2>
-Preview
-</h2>
+<pre id="out-braille"></pre>
 
-
-<div
-id="preview"
-class="preview">
 </div>
 
 
 
-<h3>
-Frame
-</h3>
+<div class="output-box">
+
+<h4>
+Unicode
+</h4>
+
+<button 
+class="copy-btn"
+data-target="out-unicode">
+Copy
+</button>
+
+<pre id="out-unicode"></pre>
+
+</div>
 
 
-<span id="frameLabel">
-1
-</span>
+
+<div class="output-box">
+
+<h4>
+ASCII
+</h4>
+
+<button 
+class="copy-btn"
+data-target="out-ascii">
+Copy
+</button>
+
+<pre id="out-ascii"></pre>
+
+</div>
 
 
 
-<h3>
-Output
-</h3>
+<div class="output-box">
 
+<h4>
+Animation
+</h4>
 
-<pre id="output"></pre>
+<button 
+class="copy-btn"
+data-target="out-animation">
+Copy
+</button>
+
+<pre id="out-animation"></pre>
+
+</div>
+
 
 
 </aside>
 
 
+</div>
+
+
+
+
+
+
+<!-- IMPORT MODAL -->
+
+
+<div id="import-modal" class="modal-overlay">
+
+<div class="modal">
+
+<h2>
+Import Braille
+</h2>
+
+
+<textarea 
+id="import-textarea"
+placeholder="Paste Braille, JSON, JS array...">
+</textarea>
+
+
+<div id="import-info"></div>
+
+<div id="import-error"></div>
+
+
+<div class="modal-buttons">
+
+<button id="import-cancel">
+Cancel
+</button>
+
+<button id="import-confirm" disabled>
+Import
+</button>
+
+</div>
+
+
+</div>
 
 </div>
 
@@ -274,9 +379,37 @@ Output
 
 
 
+<!-- COMMAND PALETTE -->
+
+
+<div id="command-palette" class="modal-overlay">
+
+<div class="palette">
+
+<input
+id="palette-search"
+placeholder="Search commands..."
+>
+
+
+<div id="palette-list"></div>
+
+
+</div>
+
+</div>
+
+
+
+
+
+<!-- TOASTS -->
+
+<div id="toast-container"></div>
+
+
+
 <script src="script.js"></script>
 
-
 </body>
-
 </html>
