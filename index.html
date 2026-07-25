@@ -1,42 +1,203 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Braille Studio</title>
+
     <link rel="stylesheet" href="style.css">
 </head>
 
+
 <body>
 
-<header>
-    <h1>Braille Studio</h1>
-    <p>Braille animation editor</p>
+<header class="topbar">
+
+    <h1>⠃⠗⠁⠊⠇⠇⠑ Studio</h1>
+
+    <div class="controls">
+
+        <button id="undoBtn">Undo</button>
+        <button id="redoBtn">Redo</button>
+
+        <button id="clearBtn">
+            Clear
+        </button>
+
+        <button id="addFrameBtn">
+            + Frame
+        </button>
+
+        <button id="playBtn">
+            ▶ Play
+        </button>
+
+    </div>
+
 </header>
 
 
-<div class="editor">
 
-    <div class="panel">
-        <h2>Canvas</h2>
-
-        <div class="braille-grid"></div>
-
-    </div>
+<div class="app">
 
 
-    <div class="panel">
+    <!-- LEFT TOOL PANEL -->
 
-        <h2>Preview</h2>
+    <aside class="sidebar">
 
-        <div id="preview">
-            ⠀
+        <h2>Tools</h2>
+
+
+        <button class="tool active">
+            Pencil
+        </button>
+
+
+        <button class="tool">
+            Select
+        </button>
+
+
+        <hr>
+
+
+        <h3>Export</h3>
+
+        <button id="copyBtn">
+            Copy Braille
+        </button>
+
+
+        <button id="exportBtn">
+            Export JSON
+        </button>
+
+
+        <input 
+            type="file"
+            id="importInput"
+            hidden
+        >
+
+        <button id="importBtn">
+            Import JSON
+        </button>
+
+
+    </aside>
+
+
+
+
+    <!-- CENTER EDITOR -->
+
+    <main class="workspace">
+
+
+        <section class="canvas-panel">
+
+
+            <h2>
+                Canvas
+            </h2>
+
+
+            <div id="canvas"
+                 class="braille-grid">
+            </div>
+
+
+
+        </section>
+
+
+
+        <section class="timeline-panel">
+
+
+            <div class="timeline-header">
+
+                <h2>
+                    Timeline
+                </h2>
+
+
+                <label>
+
+                    FPS:
+
+                    <input
+                        id="fps"
+                        type="number"
+                        value="12"
+                        min="1"
+                        max="60"
+                    >
+
+                </label>
+
+
+            </div>
+
+
+
+            <div id="timeline"
+                 class="timeline">
+            </div>
+
+
+
+        </section>
+
+
+
+    </main>
+
+
+
+
+
+    <!-- RIGHT PREVIEW -->
+
+
+    <aside class="preview-panel">
+
+
+        <h2>
+            Preview
+        </h2>
+
+
+        <div id="preview"
+             class="preview">
+             
         </div>
 
-    </div>
+
+
+        <div class="status">
+
+            Frame:
+            <span id="frameNumber">
+                1
+            </span>
+
+        </div>
+
+
+    </aside>
+
 
 </div>
+
+
+
 
 
 <script src="script.js"></script>
 
 </body>
+
 </html>
