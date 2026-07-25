@@ -1,257 +1,93 @@
-// =====================================
-// Braille Studio v0.2.1
-// Core Editor Engine
-// =====================================
+// ======================================================
+// BRAILLE STUDIO
+// Core Engine
+// ======================================================
 
 
-const canvas = document.getElementById("canvas");
-const preview = document.getElementById("preview");
-const output = document.getElementById("output");
-const timeline = document.getElementById("timeline");
-
-const frameLabel = document.getElementById("frameLabel");
-
-const widthInput = document.getElementById("widthInput");
-const heightInput = document.getElementById("heightInput");
-const fpsInput = document.getElementById("fpsInput");
+// ================= BRAILLE =================
 
 
-// Buttons
-
-const undoBtn = document.getElementById("undoBtn");
-const redoBtn = document.getElementById("redoBtn");
-const clearBtn = document.getElementById("clearBtn");
-
-const playBtn = document.getElementById("playBtn");
-
-const pencilBtn = document.getElementById("pencilBtn");
-const eraserBtn = document.getElementById("eraserBtn");
-
-const resizeBtn = document.getElementById("resizeBtn");
-
-const addFrameBtn = document.getElementById("addFrameBtn");
-const duplicateBtn = document.getElementById("duplicateBtn");
-const deleteFrameBtn = document.getElementById("deleteFrameBtn");
-
-const copyBtn = document.getElementById("copyBtn");
-
-const saveBtn = document.getElementById("saveBtn");
-const loadBtn = document.getElementById("loadBtn");
-const fileInput = document.getElementById("fileInput");
-
-
-
-
-// =====================================
-// SETTINGS
-// =====================================
-
-
-let width = 16;
-let height = 4;
-
-
-let frames = [];
-
-let currentFrame = 0;
-
-
-let currentTool = "pencil";
-
-
-let drawing = false;
-
-
-let undoStack = [];
-let redoStack = [];
-
-
-let playing = false;
-let timer;
-
-
-
-
-
-
-// =====================================
-// BRAILLE DATABASE
-// =====================================
-
-
-const brailleDictionary = [];
-
-for(let i = 0; i < 256; i++){
-
-    brailleDictionary[i] =
-    String.fromCharCode(
-        0x2800 + i
-    );
-
-}
-
-
-
-const dotMap = [
-    0,
-    1,
-    2,
-    6,
-    3,
-    4,
-    5,
-    7
+const DOT_BITS = [
+    [0x01, 0x08],
+    [0x02, 0x10],
+    [0x04, 0x20],
+    [0x40, 0x80]
 ];
 
 
 
-
-
-
-
-// =====================================
-// FRAME CREATION
-// =====================================
-
-
-function createFrame(){
+function createGrid(rows, cols){
 
     return Array.from(
-        {
-            length:
-            width * height
-        },
-
-        () =>
-        Array(8).fill(false)
-
+        {length:rows},
+        ()=>Array(cols).fill(0)
     );
 
 }
 
 
 
+function cloneGrid(grid){
 
-function resetProject(){
-
-    frames = [
-        createFrame()
-    ];
-
-    currentFrame = 0;
+    return grid.map(row=>[...row]);
 
 }
 
 
 
 
+// Convert pixel grid -> braille characters
+
+function gridToBraille(grid, cellCols, cellRows){
+
+    const output=[];
 
 
+    for(let cy=0; cy<cellRows; cy++){
 
-// =====================================
-// CANVAS BUILDER
-// =====================================
-
-
-function buildCanvas(){
-
-    canvas.innerHTML = "";
+        let line="";
 
 
-    canvas.style.gridTemplateColumns =
-    `repeat(${width},90px)`;
+        for(let cx=0; cx<cellCols; cx++){
+
+            let mask=0;
 
 
-    frames[currentFrame]
-    .forEach((cell, cellIndex)=>{
+            for(let y=0;y<4;y++){
+
+                for(let x=0;x<2;x++){
+
+                    const gy=cy*4+y;
+                    const gx=cx*2+x;
 
 
-        const cellBox =
-        document.createElement("div");
+                    if(
+                        grid[gy] &&
+                        grid[gy][gx]
+                    ){
 
+                        mask |= DOT_BITS[y][x];
 
-        cellBox.className =
-        "cell";
-
-
-
-        for(let dot = 0; dot < 8; dot++){
-
-
-            const dotElement =
-            document.createElement("div");
-
-
-            dotElement.className =
-            "dot";
-
-
-
-            if(cell[dot]){
-
-                dotElement.classList.add(
-                    "active"
-                );
-
-            }
-
-
-
-            dotElement.onmousedown = (e)=>{
-
-
-                saveUndo();
-
-
-                drawing = true;
-
-
-                paint(
-                    cellIndex,
-                    dot,
-                    dotElement
-                );
-
-
-            };
-
-
-
-            dotElement.onmouseenter = ()=>{
-
-
-                if(drawing){
-
-                    paint(
-                        cellIndex,
-                        dot,
-                        dotElement
-                    );
+                    }
 
                 }
 
-            };
+            }
 
 
-
-            cellBox.appendChild(
-                dotElement
+            line += String.fromCodePoint(
+                0x2800 + mask
             );
-
 
         }
 
 
+        output.push(line);
 
-        canvas.appendChild(
-            cellBox
-        );
-
-
-    });
+    }
 
 
-    update();
+    return output;
 
 }
 
@@ -259,104 +95,37 @@ function buildCanvas(){
 
 
 
-document.body.onmouseup = ()=>{
-
-    drawing = false;
-
-};
+// Braille -> pixels
 
 
+function decodeBraille(char){
 
 
+    const mask =
+        char.codePointAt(0)-0x2800;
 
 
-
-// =====================================
-// DRAWING
-// =====================================
-
-
-function paint(cell, dot, element){
-
-
-    let value =
-    currentTool === "pencil";
-
-
-    frames[currentFrame][cell][dot]
-    =
-    value;
+    const grid=createGrid(4,2);
 
 
 
-    if(value){
+    for(let y=0;y<4;y++){
 
-        element.classList.add(
-            "active"
-        );
-
-    }
-
-    else{
-
-        element.classList.remove(
-            "active"
-        );
-
-    }
+        for(let x=0;x<2;x++){
 
 
+            if(mask & DOT_BITS[y][x]){
 
-    update();
-
-}
-
-
-
-
-
-
-// =====================================
-// BRAILLE OUTPUT
-// =====================================
-
-
-function getBraille(){
-
-
-    let result = "";
-
-
-    frames[currentFrame]
-    .forEach(cell=>{
-
-
-        let value = 0;
-
-
-
-        for(let i = 0; i < 8; i++){
-
-
-            if(cell[i]){
-
-                value +=
-                1 << dotMap[i];
+                grid[y][x]=1;
 
             }
 
         }
 
+    }
 
 
-        result +=
-        brailleDictionary[value];
-
-
-    });
-
-
-    return result;
+    return grid;
 
 }
 
@@ -364,23 +133,83 @@ function getBraille(){
 
 
 
-function update(){
+// ================= STATE =================
 
 
-    let text =
-    getBraille();
+
+const state={
 
 
-    preview.textContent =
-    text;
+    cellCols:2,
+
+    cellRows:1,
 
 
-    output.textContent =
-    text;
+    frames:[
+        createGrid(4,4)
+    ],
 
 
-    frameLabel.textContent =
-    currentFrame + 1;
+    currentFrame:0,
+
+
+    mode:"draw",
+
+
+    fps:4,
+
+
+    loop:true,
+
+    bounce:false,
+
+
+    playing:false,
+
+
+    timer:null,
+
+
+    undo:[],
+
+
+    redo:[],
+
+
+    pointerDown:false,
+
+
+    paintValue:1,
+
+
+    onion:false
+
+
+};
+
+
+
+
+
+function pixelRows(){
+
+    return state.cellRows*4;
+
+}
+
+
+
+function pixelCols(){
+
+    return state.cellCols*2;
+
+}
+
+
+
+function currentGrid(){
+
+    return state.frames[state.currentFrame];
 
 }
 
@@ -388,268 +217,37 @@ function update(){
 
 
 
+// ================= UNDO =================
 
-
-// =====================================
-// TIMELINE
-// =====================================
-
-
-function updateTimeline(){
-
-
-    timeline.innerHTML = "";
-
-
-    frames.forEach((frame,index)=>{
-
-
-        const item =
-        document.createElement("div");
-
-
-        item.className =
-        "frame";
-
-
-        if(index === currentFrame){
-
-            item.classList.add(
-                "active"
-            );
-
-        }
-
-
-        item.textContent =
-        index + 1;
-
-
-
-        item.onclick = ()=>{
-
-
-            currentFrame = index;
-
-
-            buildCanvas();
-
-            updateTimeline();
-
-
-        };
-
-
-        timeline.appendChild(item);
-
-
-    });
-
-
-}
-
-
-
-
-
-
-
-
-// =====================================
-// TOOLS
-// =====================================
-
-
-pencilBtn.onclick = ()=>{
-
-
-    currentTool =
-    "pencil";
-
-
-    pencilBtn.classList.add(
-        "active"
-    );
-
-
-    eraserBtn.classList.remove(
-        "active"
-    );
-
-
-};
-
-
-
-
-
-eraserBtn.onclick = ()=>{
-
-
-    currentTool =
-    "eraser";
-
-
-    eraserBtn.classList.add(
-        "active"
-    );
-
-
-    pencilBtn.classList.remove(
-        "active"
-    );
-
-
-};
-
-
-
-
-
-
-
-// =====================================
-// FRAMES
-// =====================================
-
-
-addFrameBtn.onclick = ()=>{
-
-
-    frames.push(
-        createFrame()
-    );
-
-
-    currentFrame =
-    frames.length - 1;
-
-
-    buildCanvas();
-
-    updateTimeline();
-
-
-};
-
-
-
-
-
-duplicateBtn.onclick = ()=>{
-
-
-    frames.splice(
-
-        currentFrame + 1,
-
-        0,
-
-        JSON.parse(
-            JSON.stringify(
-                frames[currentFrame]
-            )
-        )
-
-    );
-
-
-    currentFrame++;
-
-
-    buildCanvas();
-
-    updateTimeline();
-
-
-};
-
-
-
-
-
-deleteFrameBtn.onclick = ()=>{
-
-
-    if(frames.length <= 1)
-        return;
-
-
-
-    frames.splice(
-        currentFrame,
-        1
-    );
-
-
-    currentFrame =
-    Math.max(
-        0,
-        currentFrame - 1
-    );
-
-
-    buildCanvas();
-
-    updateTimeline();
-
-
-};
-
-
-
-
-
-
-
-
-// =====================================
-// RESIZE
-// =====================================
-
-
-resizeBtn.onclick = ()=>{
-
-
-    width =
-    Number(widthInput.value);
-
-
-    height =
-    Number(heightInput.value);
-
-
-
-    resetProject();
-
-
-    buildCanvas();
-
-    updateTimeline();
-
-
-};
-
-
-
-
-
-
-
-
-// =====================================
-// UNDO / REDO
-// =====================================
 
 
 function saveUndo(){
 
-    undoStack.push(
-        JSON.stringify(frames)
-    );
+
+    state.undo.push({
+
+        frames:
+        state.frames.map(cloneGrid),
+
+        cols:
+        state.cellCols,
+
+        rows:
+        state.cellRows,
+
+        frame:
+        state.currentFrame
+
+    });
 
 
-    redoStack = [];
+    if(state.undo.length>100)
+
+        state.undo.shift();
+
+
+
+    state.redo=[];
 
 }
 
@@ -657,349 +255,979 @@ function saveUndo(){
 
 
 
-undoBtn.onclick = ()=>{
+function undo(){
 
 
-    if(!undoStack.length)
+    if(!state.undo.length)
+
         return;
 
 
-    redoStack.push(
-        JSON.stringify(frames)
-    );
 
+    state.redo.push({
 
-    frames =
-    JSON.parse(
-        undoStack.pop()
-    );
+        frames:
+        state.frames.map(cloneGrid),
 
+        cols:
+        state.cellCols,
 
-    buildCanvas();
+        rows:
+        state.cellRows,
 
-    updateTimeline();
+        frame:
+        state.currentFrame
 
-
-};
-
-
+    });
 
 
 
-redoBtn.onclick = ()=>{
+    const s=state.undo.pop();
 
 
-    if(!redoStack.length)
+    state.frames=s.frames;
+
+    state.cellCols=s.cols;
+
+    state.cellRows=s.rows;
+
+    state.currentFrame=s.frame;
+
+
+    renderAll();
+
+}
+
+
+
+
+
+function redo(){
+
+
+    if(!state.redo.length)
+
         return;
 
 
-    undoStack.push(
-        JSON.stringify(frames)
-    );
 
+    state.undo.push({
 
-    frames =
-    JSON.parse(
-        redoStack.pop()
-    );
+        frames:
+        state.frames.map(cloneGrid),
 
+        cols:
+        state.cellCols,
 
-    buildCanvas();
+        rows:
+        state.cellRows,
 
-    updateTimeline();
+        frame:
+        state.currentFrame
 
-
-};
-
-
+    });
 
 
 
-
-clearBtn.onclick = ()=>{
-
-
-    saveUndo();
+    const s=state.redo.pop();
 
 
-    frames[currentFrame] =
-    createFrame();
+    state.frames=s.frames;
+
+    state.cellCols=s.cols;
+
+    state.cellRows=s.rows;
+
+    state.currentFrame=s.frame;
 
 
-    buildCanvas();
+    renderAll();
 
-
-};
-
-
-
-
-
-
-
-// =====================================
-// PLAYBACK
-// =====================================
-
-
-playBtn.onclick = ()=>{
-
-
-    playing =
-    !playing;
+}
+// ======================================================
+// BRAILLE STUDIO
+// Editor + Drawing Engine
+// ======================================================
 
 
 
-    if(playing){
+// ================= RENDER GRID =================
 
 
-        playBtn.textContent =
-        "⏸ Pause";
+function renderGrid(){
+
+
+    const container =
+        document.getElementById("dot-grid");
+
+
+    container.innerHTML="";
+
+
+    const grid=currentGrid();
+
+
+    for(let r=0;r<pixelRows();r++){
+
+
+        const row=document.createElement("div");
+
+        row.className="grid-row";
 
 
 
-        timer =
-        setInterval(()=>{
+        for(let c=0;c<pixelCols();c++){
 
 
-            currentFrame++;
+            const dot=document.createElement("div");
 
 
-            if(currentFrame >= frames.length){
+            dot.className="dot";
 
-                currentFrame = 0;
+
+            dot.dataset.r=r;
+
+            dot.dataset.c=c;
+
+
+
+            if(grid[r][c]){
+
+                dot.classList.add("on");
 
             }
 
 
-            buildCanvas();
 
-            updateTimeline();
-
-
-        },
+            row.appendChild(dot);
 
 
-        1000 /
-        Number(fpsInput.value)
-
-        );
-
-
-    }
-
-    else{
-
-
-        playBtn.textContent =
-        "▶ Play";
-
-
-        clearInterval(timer);
-
-    }
-
-
-};
-
-
-
-
-
-
-
-// =====================================
-// FILES
-// =====================================
-
-
-copyBtn.onclick = ()=>{
-
-
-    navigator.clipboard.writeText(
-        getBraille()
-    );
-
-
-};
-
-
-
-
-
-saveBtn.onclick = ()=>{
-
-
-    const project = {
-
-        width,
-
-        height,
-
-        fps:
-        fpsInput.value,
-
-        frames
-
-    };
-
-
-    const blob =
-    new Blob(
-        [
-            JSON.stringify(
-                project,
-                null,
-                2
-            )
-        ],
-
-        {
-            type:
-            "application/json"
         }
 
-    );
+
+        container.appendChild(row);
+
+
+    }
 
 
 
-    const url =
-    URL.createObjectURL(blob);
+    document.getElementById("grid-label").textContent =
+
+        `${pixelCols()} × ${pixelRows()} pixels — ${state.cellCols * state.cellRows} chars`;
 
 
 
-    const link =
-    document.createElement("a");
+}
 
 
-    link.href = url;
 
 
-    link.download =
-    "braille-project.json";
 
 
-    link.click();
+// ================= DRAW DOT =================
+
+
+
+function paintDot(r,c,value){
+
+
+    const grid=currentGrid();
+
+
+    if(
+        grid[r] &&
+        grid[r][c] !== undefined
+    ){
+
+        grid[r][c]=value;
+
+    }
+
+
+}
+
+
+
+
+
+
+// ================= POINTER DRAWING =================
+
+
+function setupDrawing(){
+
+
+
+const gridEl=document.getElementById("dot-grid");
+
+
+
+gridEl.addEventListener(
+"pointerdown",
+e=>{
+
+
+const dot=e.target.closest(".dot");
+
+
+if(!dot)return;
+
+
+
+saveUndo();
+
+
+state.pointerDown=true;
+
+
+gridEl.setPointerCapture(
+e.pointerId
+);
+
+
+
+const r=Number(dot.dataset.r);
+
+const c=Number(dot.dataset.c);
+
+
+
+state.paintValue =
+(
+e.shiftKey ||
+state.mode==="erase"
+)
+?0:1;
+
+
+
+paintDot(
+r,
+c,
+state.paintValue
+);
+
+
+
+renderGrid();
+
+
+});
+
+
+
+
+
+
+gridEl.addEventListener(
+"pointermove",
+e=>{
+
+
+if(!state.pointerDown)
+return;
+
+
+
+const dot=document.elementFromPoint(
+e.clientX,
+e.clientY
+)?.closest(".dot");
+
+
+
+if(!dot)
+return;
+
+
+
+paintDot(
+Number(dot.dataset.r),
+Number(dot.dataset.c),
+state.paintValue
+);
+
+
+
+renderGrid();
+
+
+
+});
+
+
+
+
+
+
+gridEl.addEventListener(
+"pointerup",
+()=>{
+
+state.pointerDown=false;
+
+});
+
+
+
+}
+
+
+
+
+
+
+
+// ================= RESIZE =================
+
+
+
+function resizeGrid(cols,rows){
+
+
+
+saveUndo();
+
+
+
+const newRows=rows*4;
+
+const newCols=cols*2;
+
+
+
+state.frames =
+state.frames.map(old=>{
+
+
+const next=createGrid(
+newRows,
+newCols
+);
+
+
+
+for(
+let y=0;
+y<Math.min(old.length,newRows);
+y++
+){
+
+
+for(
+let x=0;
+x<Math.min(old[0].length,newCols);
+x++
+){
+
+
+next[y][x]=old[y][x];
+
+
+}
+
+
+}
+
+
+
+return next;
+
+
+
+});
+
+
+
+state.cellCols=cols;
+
+state.cellRows=rows;
+
+
+
+renderAll();
+
+
+}
+
+
+
+
+
+
+
+// ================= FRAMES =================
+
+
+
+function addFrame(){
+
+
+
+saveUndo();
+
+
+
+state.frames.splice(
+state.currentFrame+1,
+0,
+createGrid(
+pixelRows(),
+pixelCols()
+)
+);
+
+
+
+state.currentFrame++;
+
+
+
+renderAll();
+
+
+}
+
+
+
+
+function duplicateFrame(){
+
+
+
+saveUndo();
+
+
+
+state.frames.splice(
+state.currentFrame+1,
+0,
+cloneGrid(
+currentGrid()
+)
+);
+
+
+
+state.currentFrame++;
+
+
+
+renderAll();
+
+
+}
+
+
+
+
+
+function deleteFrame(){
+
+
+
+if(state.frames.length<=1)
+return;
+
+
+
+saveUndo();
+
+
+
+state.frames.splice(
+state.currentFrame,
+1
+);
+
+
+
+if(
+state.currentFrame>=state.frames.length
+){
+
+state.currentFrame=
+state.frames.length-1;
+
+}
+
+
+
+renderAll();
+
+
+}
+
+
+
+
+
+
+// ================= TIMELINE =================
+
+
+
+function renderTimeline(){
+
+
+const strip=
+document.getElementById(
+"frame-strip"
+);
+
+
+
+strip.innerHTML="";
+
+
+
+state.frames.forEach(
+(frame,index)=>{
+
+
+const item=
+document.createElement("div");
+
+
+
+item.className=
+"frame-thumb";
+
+
+
+if(index===state.currentFrame)
+
+item.classList.add("active");
+
+
+
+
+item.textContent =
+gridToBraille(
+frame,
+state.cellCols,
+state.cellRows
+)[0];
+
+
+
+item.onclick=()=>{
+
+
+state.currentFrame=index;
+
+
+renderAll();
 
 
 };
 
 
 
-
-
-loadBtn.onclick = ()=>{
-
-    fileInput.click();
-
-};
+strip.appendChild(item);
 
 
 
+});
 
 
-fileInput.onchange = (e)=>{
+
+document.getElementById(
+"frame-counter"
+).textContent =
+`${state.currentFrame+1} / ${state.frames.length}`;
 
 
-    const file =
-    e.target.files[0];
+
+}
 
 
-    if(!file)
+
+
+
+// ================= RENDER ALL =================
+
+
+
+function renderAll(){
+
+
+renderGrid();
+
+
+renderTimeline();
+
+
+renderOutputs?.();
+
+
+}
+
+
+
+
+
+
+
+// ================= OUTPUT =================
+
+
+
+function renderOutputs(){
+
+
+const braille=
+gridToBraille(
+currentGrid(),
+state.cellCols,
+state.cellRows
+);
+
+
+
+const out=
+document.getElementById(
+"out-braille"
+);
+
+
+if(out)
+
+out.textContent=
+braille.join("\n");
+
+
+
+}
+// ======================================================
+// BRAILLE STUDIO
+// Final Systems
+// ======================================================
+
+
+// ================= PLAYBACK =================
+
+
+function play(){
+
+
+    if(state.playing){
+
+        stop();
+
+        return;
+
+    }
+
+
+    if(state.frames.length<=1)
         return;
 
 
 
-    const reader =
-    new FileReader();
+    state.playing=true;
 
 
 
-    reader.onload = ()=>{
+    state.timer=setInterval(()=>{
 
 
-        const project =
-        JSON.parse(
-            reader.result
-        );
+        state.currentFrame++;
 
 
-        width =
-        project.width;
+        if(state.currentFrame>=state.frames.length){
 
 
-        height =
-        project.height;
+            if(state.bounce){
+
+                state.frames.reverse();
 
 
-        frames =
-        project.frames;
+                state.currentFrame=0;
+
+
+            }
+
+            else if(state.loop){
+
+                state.currentFrame=0;
+
+            }
+
+            else{
+
+                stop();
+
+            }
+
+
+        }
 
 
 
-        widthInput.value =
-        width;
+        renderAll();
 
 
-        heightInput.value =
-        height;
+    },1000/state.fps);
 
 
 
-        currentFrame = 0;
+}
 
 
-        buildCanvas();
-
-        updateTimeline();
 
 
-    };
+
+function stop(){
 
 
-    reader.readAsText(file);
+    state.playing=false;
+
+
+    clearInterval(state.timer);
+
+
+    state.timer=null;
+
+
+}
+
+
+
+
+
+
+
+// ================= EXPORT =================
+
+
+
+function exportBraille(){
+
+
+    return state.frames.map(frame=>{
+
+
+        return gridToBraille(
+            frame,
+            state.cellCols,
+            state.cellRows
+        ).join("\n");
+
+
+    }).join("\n\n");
+
+
+}
+
+
+
+
+
+function exportJSON(){
+
+
+    return JSON.stringify({
+
+        cols:state.cellCols,
+
+        rows:state.cellRows,
+
+        fps:state.fps,
+
+        frames:state.frames
+
+
+    },null,2);
+
+
+}
+
+
+
+
+
+function downloadFile(text,name,type){
+
+
+    const blob=
+    new Blob(
+        [text],
+        {type:type}
+    );
+
+
+    const a=document.createElement("a");
+
+
+    a.href=
+    URL.createObjectURL(blob);
+
+
+    a.download=name;
+
+
+    a.click();
+
+
+}
+
+
+
+
+
+
+
+
+// ================= IMPORT =================
+
+
+
+function importJSON(file){
+
+
+const reader=new FileReader();
+
+
+
+reader.onload=e=>{
+
+
+const data=
+JSON.parse(e.target.result);
+
+
+
+state.cellCols=data.cols;
+
+state.cellRows=data.rows;
+
+
+state.frames=data.frames;
+
+
+state.currentFrame=0;
+
+
+
+renderAll();
+
 
 
 };
 
 
 
+reader.readAsText(file);
+
+
+
+}
 
 
 
 
-// =====================================
-// SHORTCUTS
-// =====================================
+
+
+
+// ================= CLIPBOARD =================
+
+
+
+function copyBraille(){
+
+
+navigator.clipboard.writeText(
+exportBraille()
+);
+
+
+}
+
+
+
+
+
+// ================= KEYBINDS =================
+
 
 
 document.addEventListener(
 "keydown",
-(e)=>{
+e=>{
 
 
-    if(e.ctrlKey && e.key==="z")
-        undoBtn.click();
-
-
-
-    if(e.ctrlKey && e.key==="y")
-        redoBtn.click();
+if(
+e.target.tagName==="INPUT"
+)
+return;
 
 
 
-    if(e.code==="Space"){
-
-        e.preventDefault();
-
-        playBtn.click();
-
-    }
+switch(e.key){
 
 
+case " ":
 
-    if(e.key==="Delete")
-        clearBtn.click();
+e.preventDefault();
+
+play();
+
+break;
+
+
+
+case "z":
+
+undo();
+
+break;
+
+
+
+case "y":
+
+redo();
+
+break;
+
+
+
+case "Delete":
+
+deleteFrame();
+
+break;
+
+
+
+case "n":
+
+addFrame();
+
+break;
+
+
+
+case "d":
+
+state.mode="draw";
+
+break;
+
+
+
+case "e":
+
+state.mode="erase";
+
+break;
+
+
+
+}
+
 
 
 });
@@ -1010,11 +1238,209 @@ document.addEventListener(
 
 
 
-// START
+// ================= CONNECT UI =================
 
 
-resetProject();
 
-buildCanvas();
+function connectUI(){
 
-updateTimeline();
+
+
+// resize
+
+
+const cols=
+document.getElementById(
+"cell-cols"
+);
+
+
+
+const rows=
+document.getElementById(
+"cell-rows"
+);
+
+
+
+if(cols)
+
+cols.onchange=()=>{
+
+
+resizeGrid(
+Number(cols.value),
+state.cellRows
+);
+
+
+};
+
+
+
+if(rows)
+
+rows.onchange=()=>{
+
+
+resizeGrid(
+state.cellCols,
+Number(rows.value)
+);
+
+
+};
+
+
+
+
+
+
+// buttons
+
+
+const buttons={
+
+
+"btn-play":play,
+
+
+"btn-new-frame":addFrame,
+
+
+"btn-dup-frame":duplicateFrame,
+
+
+"btn-del-frame":deleteFrame,
+
+
+"btn-undo":undo,
+
+
+"btn-redo":redo,
+
+
+"btn-copy":copyBraille
+
+
+
+};
+
+
+
+Object.keys(buttons).forEach(id=>{
+
+
+const el=document.getElementById(id);
+
+
+if(el)
+
+el.onclick=buttons[id];
+
+
+});
+
+
+
+
+
+// save
+
+
+const save=
+document.getElementById(
+"btn-save"
+);
+
+
+
+if(save)
+
+save.onclick=()=>{
+
+
+downloadFile(
+
+exportJSON(),
+
+"braille-project.json",
+
+"application/json"
+
+);
+
+
+};
+
+
+
+
+
+// load
+
+
+const load=
+document.getElementById(
+"btn-load"
+);
+
+
+
+if(load)
+
+
+load.onclick=()=>{
+
+
+const input=
+document.createElement("input");
+
+
+input.type="file";
+
+
+input.accept=".json";
+
+
+input.onchange=e=>
+importJSON(
+e.target.files[0]
+);
+
+
+input.click();
+
+
+};
+
+
+
+
+
+
+}
+
+
+
+
+
+// ================= START =================
+
+
+
+window.addEventListener(
+"DOMContentLoaded",
+()=>{
+
+
+connectUI();
+
+
+setupDrawing();
+
+
+renderAll();
+
+
+});
