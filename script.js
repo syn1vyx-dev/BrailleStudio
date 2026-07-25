@@ -1,58 +1,204 @@
-const grid = document.querySelector(".braille-grid");
-const preview = document.querySelector("#preview");
+const canvas = document.getElementById("canvas");
+const preview = document.getElementById("preview");
+const timeline = document.getElementById("timeline");
+
+const frameNumber = document.getElementById("frameNumber");
+
+const fpsInput = document.getElementById("fps");
+
+const undoBtn = document.getElementById("undoBtn");
+const redoBtn = document.getElementById("redoBtn");
+const clearBtn = document.getElementById("clearBtn");
+
+const addFrameBtn = document.getElementById("addFrameBtn");
+const playBtn = document.getElementById("playBtn");
 
 
-let cells = [];
+
+/*
+    BRAILLE DATA
+*/
 
 
-// Create 4 Braille cells
-for (let c = 0; c < 4; c++) {
+const CELLS = 8;
 
-    let cell = {
-        dots: Array(8).fill(false)
-    };
-
-    cells.push(cell);
-
-
-    const element = document.createElement("div");
-    element.className = "cell";
-
-
-    for (let d = 0; d < 8; d++) {
-
-        const dot = document.createElement("div");
-
-        dot.className = "dot";
+const DOT_MAPPING = [
+    0,
+    1,
+    2,
+    6,
+    3,
+    4,
+    5,
+    7
+];
 
 
-        dot.onmousedown = (event) => {
 
-            toggleDot(cell, d, dot, event.shiftKey);
+function createFrame() {
 
-        };
+    return Array.from(
+        {length: CELLS},
+        () => Array(8).fill(false)
+    );
 
-
-        element.appendChild(dot);
-    }
-
-
-    grid.appendChild(element);
 }
 
 
 
-function toggleDot(cell, index, element, erase) {
+let frames = [
+    createFrame()
+];
 
-    if (erase) {
-        cell.dots[index] = false;
-        element.classList.remove("active");
+
+let currentFrame = 0;
+
+
+
+let undoStack = [];
+let redoStack = [];
+
+
+
+let drawing = false;
+let erase = false;
+
+let playing = false;
+let playTimer;
+
+
+
+
+
+/*
+    CREATE CANVAS
+*/
+
+
+function buildCanvas(){
+
+    canvas.innerHTML = "";
+
+
+    frames[currentFrame].forEach((cell,index)=>{
+
+
+        const element =
+            document.createElement("div");
+
+
+        element.className="cell";
+
+
+
+        for(let dot=0;dot<8;dot++){
+
+
+            const d =
+                document.createElement("div");
+
+
+            d.className="dot";
+
+
+
+            if(cell[dot]){
+                d.classList.add("active");
+            }
+
+
+
+            d.onmousedown=(e)=>{
+
+                saveUndo();
+
+                drawing=true;
+                erase=e.shiftKey;
+
+                toggleDot(
+                    index,
+                    dot,
+                    d
+                );
+
+            };
+
+
+
+            d.onmouseenter=(e)=>{
+
+                if(drawing){
+
+                    erase=e.shiftKey;
+
+                    toggleDot(
+                        index,
+                        dot,
+                        d
+                    );
+
+                }
+
+            };
+
+
+
+            element.appendChild(d);
+
+        }
+
+
+        canvas.appendChild(element);
+
+
+    });
+
+
+
+    updatePreview();
+
+}
+
+
+
+
+
+document.body.onmouseup=()=>{
+
+    drawing=false;
+
+};
+
+
+
+
+
+
+
+/*
+    DRAWING
+*/
+
+
+function toggleDot(cell,dot,element){
+
+
+    frames[currentFrame][cell][dot]=!erase;
+
+
+    if(erase){
+
+        element.classList.remove(
+            "active"
+        );
+
     }
 
-    else {
+    else{
 
-        cell.dots[index] = true;
-        element.classList.add("active");
+        element.classList.add(
+            "active"
+        );
 
     }
 
@@ -64,42 +210,351 @@ function toggleDot(cell, index, element, erase) {
 
 
 
-function updatePreview() {
-
-    let text = "";
 
 
-    for (const cell of cells) {
-
-        let value = 0;
 
 
-        const mapping = [
-            0, // dot 1
-            1, // dot 2
-            2, // dot 3
-            6, // dot 7
-            3, // dot 4
-            4, // dot 5
-            5, // dot 6
-            7  // dot 8
-        ];
+/*
+    BRAILLE CONVERTER
+*/
 
 
-        for (let i = 0; i < 8; i++) {
+function getBraille(){
 
-            if (cell.dots[i]) {
-                value += 1 << mapping[i];
+
+    let output="";
+
+
+    frames[currentFrame].forEach(cell=>{
+
+
+        let value=0;
+
+
+        for(let i=0;i<8;i++){
+
+
+            if(cell[i]){
+
+                value +=
+                    1 << DOT_MAPPING[i];
+
             }
 
         }
 
 
-        text += String.fromCharCode(0x2800 + value);
+
+        output += String.fromCharCode(
+            0x2800 + value
+        );
+
+
+    });
+
+
+
+    return output;
+
+}
+
+
+
+
+
+
+function updatePreview(){
+
+    preview.textContent =
+        getBraille();
+
+
+    frameNumber.textContent =
+        currentFrame + 1;
+
+}
+
+
+
+
+
+
+
+/*
+    TIMELINE
+*/
+
+
+function updateTimeline(){
+
+
+    timeline.innerHTML="";
+
+
+    frames.forEach((frame,index)=>{
+
+
+        const button =
+            document.createElement("div");
+
+
+        button.className="frame";
+
+
+        if(index===currentFrame){
+
+            button.classList.add(
+                "active"
+            );
+
+        }
+
+
+
+        button.textContent =
+            index+1;
+
+
+
+        button.onclick=()=>{
+
+
+            currentFrame=index;
+
+            buildCanvas();
+
+            updateTimeline();
+
+
+        };
+
+
+
+        timeline.appendChild(button);
+
+
+
+    });
+
+
+
+}
+
+
+
+
+
+
+
+
+/*
+    FRAMES
+*/
+
+
+addFrameBtn.onclick=()=>{
+
+
+    frames.push(
+        createFrame()
+    );
+
+
+    currentFrame =
+        frames.length-1;
+
+
+    buildCanvas();
+
+    updateTimeline();
+
+
+};
+
+
+
+
+
+
+clearBtn.onclick=()=>{
+
+
+    saveUndo();
+
+
+    frames[currentFrame]=
+        createFrame();
+
+
+    buildCanvas();
+
+
+};
+
+
+
+
+
+
+
+/*
+    UNDO REDO
+*/
+
+
+function saveUndo(){
+
+
+    undoStack.push(
+        JSON.stringify(frames)
+    );
+
+
+    redoStack=[];
+
+
+}
+
+
+
+undoBtn.onclick=()=>{
+
+
+    if(!undoStack.length)
+        return;
+
+
+
+    redoStack.push(
+        JSON.stringify(frames)
+    );
+
+
+
+    frames =
+        JSON.parse(
+            undoStack.pop()
+        );
+
+
+
+    buildCanvas();
+
+    updateTimeline();
+
+
+};
+
+
+
+
+
+redoBtn.onclick=()=>{
+
+
+    if(!redoStack.length)
+        return;
+
+
+
+    undoStack.push(
+        JSON.stringify(frames)
+    );
+
+
+
+    frames =
+        JSON.parse(
+            redoStack.pop()
+        );
+
+
+
+    buildCanvas();
+
+    updateTimeline();
+
+
+};
+
+
+
+
+
+
+
+
+/*
+    PLAYBACK
+*/
+
+
+playBtn.onclick=()=>{
+
+
+    playing=!playing;
+
+
+    playBtn.textContent =
+        playing
+        ? "⏸ Pause"
+        : "▶ Play";
+
+
+
+    if(playing){
+
+
+        playTimer=setInterval(()=>{
+
+
+            currentFrame++;
+
+
+
+            if(currentFrame>=frames.length){
+
+                currentFrame=0;
+
+            }
+
+
+
+            buildCanvas();
+
+
+        },
+        1000 /
+        Number(fpsInput.value)
+        );
+
+
+    }
+
+    else{
+
+
+        clearInterval(playTimer);
+
 
     }
 
 
-    preview.textContent = text;
 
-}
+};
+
+
+
+
+
+
+
+
+/*
+    START
+*/
+
+
+buildCanvas();
+
+updateTimeline();
