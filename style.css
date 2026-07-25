@@ -39,3 +39,10 @@ header {
 .dot.active {
     background: white;
 }
+.grid {
+    user-select: none;
+}
+
+.dot {
+    touch-action: none;
+}
