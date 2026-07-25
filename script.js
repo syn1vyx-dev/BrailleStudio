@@ -1,141 +1,245 @@
-const canvas = document.getElementById("canvas");
-const preview = document.getElementById("preview");
-const timeline = document.getElementById("timeline");
-
-const frameNumber = document.getElementById("frameNumber");
-
-const fpsInput = document.getElementById("fps");
-
-const undoBtn = document.getElementById("undoBtn");
-const redoBtn = document.getElementById("redoBtn");
-const clearBtn = document.getElementById("clearBtn");
-
-const addFrameBtn = document.getElementById("addFrameBtn");
-const playBtn = document.getElementById("playBtn");
+// ==============================
+// Braille Studio v0.2 Engine
+// ==============================
 
 
+// Elements
 
-/*
-    BRAILLE DATA
-*/
+const canvas =
+document.getElementById("canvas");
 
+const preview =
+document.getElementById("preview");
 
-const CELLS = 8;
+const output =
+document.getElementById("output");
 
-const DOT_MAPPING = [
-    0,
-    1,
-    2,
-    6,
-    3,
-    4,
-    5,
-    7
-];
+const timeline =
+document.getElementById("timeline");
+
+const frameLabel =
+document.getElementById("frameLabel");
+
+const characterCount =
+document.getElementById("characterCount");
 
 
 
-function createFrame() {
+const widthInput =
+document.getElementById("widthInput");
+
+const heightInput =
+document.getElementById("heightInput");
+
+const fpsInput =
+document.getElementById("fpsInput");
+
+
+
+// Buttons
+
+const undoBtn =
+document.getElementById("undoBtn");
+
+const redoBtn =
+document.getElementById("redoBtn");
+
+const clearBtn =
+document.getElementById("clearBtn");
+
+const playBtn =
+document.getElementById("playBtn");
+
+const addFrameBtn =
+document.getElementById("addFrameBtn");
+
+const resizeBtn =
+document.getElementById("resizeBtn");
+
+const copyBtn =
+document.getElementById("copyBtn");
+
+const saveBtn =
+document.getElementById("saveBtn");
+
+const loadBtn =
+document.getElementById("loadBtn");
+
+const fileInput =
+document.getElementById("fileInput");
+
+
+
+// ==============================
+// SETTINGS
+// ==============================
+
+
+let width = 16;
+let height = 4;
+
+
+let frames = [];
+
+let currentFrame = 0;
+
+
+let drawing = false;
+
+let eraseMode = false;
+
+
+let undoStack = [];
+
+let redoStack = [];
+
+
+let playing = false;
+
+let timer;
+
+
+
+
+
+// ==============================
+// BRAILLE DICTIONARY
+// ==============================
+
+
+const brailleDictionary = [];
+
+
+for(let i = 0; i < 256; i++){
+
+    brailleDictionary[i] =
+    String.fromCharCode(0x2800 + i);
+
+}
+
+
+
+
+
+// ==============================
+// FRAME CREATION
+// ==============================
+
+
+function createFrame(){
+
+
+    let cells =
+    width * height;
+
 
     return Array.from(
-        {length: CELLS},
-        () => Array(8).fill(false)
+        {length: cells},
+        ()=>Array(8).fill(false)
     );
 
 }
 
 
 
-let frames = [
-    createFrame()
-];
+function createProject(){
 
 
-let currentFrame = 0;
+    frames = [
+        createFrame()
+    ];
 
 
-
-let undoStack = [];
-let redoStack = [];
+    currentFrame = 0;
 
 
-
-let drawing = false;
-let erase = false;
-
-let playing = false;
-let playTimer;
+}
 
 
 
 
 
-/*
-    CREATE CANVAS
-*/
+
+
+// ==============================
+// CANVAS
+// ==============================
 
 
 function buildCanvas(){
 
-    canvas.innerHTML = "";
+
+    canvas.innerHTML="";
 
 
-    frames[currentFrame].forEach((cell,index)=>{
+    canvas.style.gridTemplateColumns =
+    `repeat(${width}, 90px)`;
 
 
-        const element =
+    frames[currentFrame]
+    .forEach((cell, index)=>{
+
+
+        let box =
+        document.createElement("div");
+
+
+        box.className="cell";
+
+
+
+        for(let i=0;i<8;i++){
+
+
+            let dot =
             document.createElement("div");
 
 
-        element.className="cell";
+            dot.className="dot";
+
+
+            if(cell[i])
+                dot.classList.add("active");
 
 
 
-        for(let dot=0;dot<8;dot++){
+            dot.onmousedown=(e)=>{
 
-
-            const d =
-                document.createElement("div");
-
-
-            d.className="dot";
-
-
-
-            if(cell[dot]){
-                d.classList.add("active");
-            }
-
-
-
-            d.onmousedown=(e)=>{
 
                 saveUndo();
 
-                drawing=true;
-                erase=e.shiftKey;
 
-                toggleDot(
+                drawing=true;
+
+                eraseMode=e.shiftKey;
+
+
+                paint(
                     index,
-                    dot,
-                    d
+                    i,
+                    dot
                 );
+
 
             };
 
 
 
-            d.onmouseenter=(e)=>{
+            dot.onmouseenter=(e)=>{
+
 
                 if(drawing){
 
-                    erase=e.shiftKey;
 
-                    toggleDot(
+                    eraseMode=e.shiftKey;
+
+
+                    paint(
                         index,
-                        dot,
-                        d
+                        i,
+                        dot
                     );
+
 
                 }
 
@@ -143,19 +247,21 @@ function buildCanvas(){
 
 
 
-            element.appendChild(d);
+            box.appendChild(dot);
 
         }
 
 
-        canvas.appendChild(element);
+
+        canvas.appendChild(box);
+
 
 
     });
 
 
 
-    updatePreview();
+    update();
 
 }
 
@@ -175,35 +281,27 @@ document.body.onmouseup=()=>{
 
 
 
-/*
-    DRAWING
-*/
+
+function paint(cell,dot,element){
 
 
-function toggleDot(cell,dot,element){
+    frames[currentFrame][cell][dot]
+    =
+    !eraseMode;
 
 
-    frames[currentFrame][cell][dot]=!erase;
+    if(eraseMode)
+
+        element.classList.remove("active");
+
+    else
+
+        element.classList.add("active");
 
 
-    if(erase){
 
-        element.classList.remove(
-            "active"
-        );
+    update();
 
-    }
-
-    else{
-
-        element.classList.add(
-            "active"
-        );
-
-    }
-
-
-    updatePreview();
 
 }
 
@@ -214,47 +312,55 @@ function toggleDot(cell,dot,element){
 
 
 
-/*
-    BRAILLE CONVERTER
-*/
+
+// ==============================
+// BRAILLE CONVERSION
+// ==============================
+
+
+const map = [
+0,1,2,6,
+3,4,5,7
+];
+
 
 
 function getBraille(){
 
 
-    let output="";
+    let result="";
 
 
-    frames[currentFrame].forEach(cell=>{
+    frames[currentFrame]
+    .forEach(cell=>{
 
 
         let value=0;
 
 
+
         for(let i=0;i<8;i++){
 
 
-            if(cell[i]){
+            if(cell[i])
 
                 value +=
-                    1 << DOT_MAPPING[i];
+                1 << map[i];
 
-            }
 
         }
 
 
 
-        output += String.fromCharCode(
-            0x2800 + value
-        );
+        result +=
+        brailleDictionary[value];
 
 
     });
 
 
 
-    return output;
+    return result;
 
 }
 
@@ -263,14 +369,34 @@ function getBraille(){
 
 
 
-function updatePreview(){
+
+
+function update(){
+
+
+    let text =
+    getBraille();
+
+
 
     preview.textContent =
-        getBraille();
+    text;
 
 
-    frameNumber.textContent =
-        currentFrame + 1;
+
+    output.textContent =
+    text;
+
+
+
+    characterCount.textContent =
+    width * height;
+
+
+
+    frameLabel.textContent =
+    currentFrame+1;
+
 
 }
 
@@ -280,9 +406,9 @@ function updatePreview(){
 
 
 
-/*
-    TIMELINE
-*/
+// ==============================
+// TIMELINE
+// ==============================
 
 
 function updateTimeline(){
@@ -294,29 +420,25 @@ function updateTimeline(){
     frames.forEach((frame,index)=>{
 
 
-        const button =
-            document.createElement("div");
+        let item =
+        document.createElement("div");
 
 
-        button.className="frame";
+        item.className="frame";
 
 
-        if(index===currentFrame){
+        if(index===currentFrame)
 
-            button.classList.add(
-                "active"
-            );
-
-        }
+            item.classList.add("active");
 
 
 
-        button.textContent =
-            index+1;
+        item.textContent =
+        index+1;
 
 
 
-        button.onclick=()=>{
+        item.onclick=()=>{
 
 
             currentFrame=index;
@@ -330,12 +452,10 @@ function updateTimeline(){
 
 
 
-        timeline.appendChild(button);
-
+        timeline.appendChild(item);
 
 
     });
-
 
 
 }
@@ -343,13 +463,6 @@ function updateTimeline(){
 
 
 
-
-
-
-
-/*
-    FRAMES
-*/
 
 
 addFrameBtn.onclick=()=>{
@@ -361,7 +474,7 @@ addFrameBtn.onclick=()=>{
 
 
     currentFrame =
-        frames.length-1;
+    frames.length-1;
 
 
     buildCanvas();
@@ -376,17 +489,31 @@ addFrameBtn.onclick=()=>{
 
 
 
-clearBtn.onclick=()=>{
 
 
-    saveUndo();
+// ==============================
+// RESIZE
+// ==============================
 
 
-    frames[currentFrame]=
-        createFrame();
+resizeBtn.onclick=()=>{
+
+
+    width =
+    Number(widthInput.value);
+
+
+    height =
+    Number(heightInput.value);
+
+
+
+    createProject();
 
 
     buildCanvas();
+
+    updateTimeline();
 
 
 };
@@ -397,9 +524,9 @@ clearBtn.onclick=()=>{
 
 
 
-/*
-    UNDO REDO
-*/
+// ==============================
+// UNDO REDO
+// ==============================
 
 
 function saveUndo(){
@@ -424,18 +551,15 @@ undoBtn.onclick=()=>{
         return;
 
 
-
     redoStack.push(
         JSON.stringify(frames)
     );
 
 
-
     frames =
-        JSON.parse(
-            undoStack.pop()
-        );
-
+    JSON.parse(
+        undoStack.pop()
+    );
 
 
     buildCanvas();
@@ -444,7 +568,6 @@ undoBtn.onclick=()=>{
 
 
 };
-
 
 
 
@@ -456,18 +579,15 @@ redoBtn.onclick=()=>{
         return;
 
 
-
     undoStack.push(
         JSON.stringify(frames)
     );
 
 
-
     frames =
-        JSON.parse(
-            redoStack.pop()
-        );
-
+    JSON.parse(
+        redoStack.pop()
+    );
 
 
     buildCanvas();
@@ -483,10 +603,32 @@ redoBtn.onclick=()=>{
 
 
 
+clearBtn.onclick=()=>{
 
-/*
-    PLAYBACK
-*/
+
+    saveUndo();
+
+
+    frames[currentFrame]=
+    createFrame();
+
+
+    buildCanvas();
+
+
+};
+
+
+
+
+
+
+
+
+
+// ==============================
+// PLAYBACK
+// ==============================
 
 
 playBtn.onclick=()=>{
@@ -495,38 +637,33 @@ playBtn.onclick=()=>{
     playing=!playing;
 
 
-    playBtn.textContent =
-        playing
-        ? "⏸ Pause"
-        : "▶ Play";
-
-
-
     if(playing){
 
 
-        playTimer=setInterval(()=>{
+        playBtn.textContent =
+        "⏸ Pause";
+
+
+        timer=setInterval(()=>{
 
 
             currentFrame++;
 
 
-
-            if(currentFrame>=frames.length){
+            if(currentFrame>=frames.length)
 
                 currentFrame=0;
-
-            }
 
 
 
             buildCanvas();
 
+            updateTimeline();
+
 
         },
         1000 /
-        Number(fpsInput.value)
-        );
+        Number(fpsInput.value));
 
 
     }
@@ -534,13 +671,16 @@ playBtn.onclick=()=>{
     else{
 
 
-        clearInterval(playTimer);
+        playBtn.textContent =
+        "▶ Play";
+
+
+        clearInterval(timer);
 
 
     }
 
 
-
 };
 
 
@@ -550,141 +690,61 @@ playBtn.onclick=()=>{
 
 
 
-/*
-    START
-*/
+// ==============================
+// SAVE LOAD
+// ==============================
 
 
-buildCanvas();
-
-updateTimeline();
-
-/*
-    EXPORT / IMPORT
-*/
+saveBtn.onclick=()=>{
 
 
-const copyBtn =
-    document.getElementById("copyBtn");
+    let data={
 
+        width,
 
-const exportBtn =
-    document.getElementById("exportBtn");
-
-
-const importBtn =
-    document.getElementById("importBtn");
-
-
-const importInput =
-    document.getElementById("importInput");
-
-
-
-
-
-/*
-    COPY BRAILLE
-*/
-
-
-copyBtn.onclick = async()=>{
-
-
-    await navigator.clipboard.writeText(
-        getBraille()
-    );
-
-
-    copyBtn.textContent =
-        "Copied!";
-
-
-    setTimeout(()=>{
-
-        copyBtn.textContent =
-            "Copy Braille";
-
-    },1000);
-
-
-};
-
-
-
-
-
-
-
-
-/*
-    EXPORT PROJECT
-*/
-
-
-exportBtn.onclick=()=>{
-
-
-    const project={
-
-        name:
-            "Braille Studio Project",
-
-
-        version:
-            "0.1",
-
+        height,
 
         fps:
-            Number(fpsInput.value),
+        fpsInput.value,
 
-
-        frames:
-            frames
-
+        frames
 
     };
 
 
-
-    const blob =
-        new Blob(
-            [
-                JSON.stringify(
-                    project,
-                    null,
-                    2
-                )
-            ],
-            {
-                type:
-                "application/json"
-            }
-        );
-
-
-
-    const url =
-        URL.createObjectURL(blob);
+    let blob =
+    new Blob(
+        [
+            JSON.stringify(
+                data,
+                null,
+                2
+            )
+        ],
+        {
+            type:
+            "application/json"
+        }
+    );
 
 
 
-    const link =
-        document.createElement("a");
-
-
-    link.href=url;
-
-
-    link.download =
-        "braille-project.json";
-
-
-    link.click();
+    let url =
+    URL.createObjectURL(blob);
 
 
 
-    URL.revokeObjectURL(url);
+    let a =
+    document.createElement("a");
+
+
+    a.href=url;
+
+    a.download=
+    "braille-project.json";
+
+
+    a.click();
 
 
 };
@@ -694,64 +754,49 @@ exportBtn.onclick=()=>{
 
 
 
+loadBtn.onclick=()=>{
 
-
-/*
-    IMPORT PROJECT
-*/
-
-
-importBtn.onclick=()=>{
-
-
-    importInput.click();
-
+    fileInput.click();
 
 };
 
 
 
 
-
-importInput.onchange=(event)=>{
-
-
-    const file =
-        event.target.files[0];
+fileInput.onchange=(e)=>{
 
 
-    if(!file)
-        return;
+    let file =
+    e.target.files[0];
 
 
-
-    const reader =
-        new FileReader();
+    let reader =
+    new FileReader();
 
 
 
     reader.onload=()=>{
 
 
-        const project =
-            JSON.parse(
-                reader.result
-            );
+        let data =
+        JSON.parse(
+            reader.result
+        );
 
 
+        width=data.width;
 
-        frames =
-            project.frames;
+        height=data.height;
+
+        frames=data.frames;
 
 
+        widthInput.value=width;
 
-        fpsInput.value =
-            project.fps || 12;
-
+        heightInput.value=height;
 
 
         currentFrame=0;
-
 
 
         buildCanvas();
@@ -760,7 +805,6 @@ importInput.onchange=(event)=>{
 
 
     };
-
 
 
     reader.readAsText(file);
@@ -775,57 +819,50 @@ importInput.onchange=(event)=>{
 
 
 
+// ==============================
+// COPY
+// ==============================
 
 
-/*
-    KEYBOARD SHORTCUTS
-*/
+copyBtn.onclick=()=>{
+
+
+    navigator.clipboard.writeText(
+        getBraille()
+    );
+
+
+};
+
+
+
+
+
+
+
+// ==============================
+// SHORTCUTS
+// ==============================
 
 
 document.addEventListener(
 "keydown",
-(event)=>{
+e=>{
 
 
-    /*
-        CTRL + Z
-    */
-
-    if(
-        event.ctrlKey &&
-        event.key==="z"
-    ){
-
+    if(e.ctrlKey && e.key==="z")
         undoBtn.click();
 
-    }
 
 
-
-    /*
-        CTRL + Y
-    */
-
-    if(
-        event.ctrlKey &&
-        event.key==="y"
-    ){
-
+    if(e.ctrlKey && e.key==="y")
         redoBtn.click();
 
-    }
 
 
+    if(e.code==="Space"){
 
-    /*
-        SPACE PLAY
-    */
-
-    if(
-        event.code==="Space"
-    ){
-
-        event.preventDefault();
+        e.preventDefault();
 
         playBtn.click();
 
@@ -833,17 +870,24 @@ document.addEventListener(
 
 
 
-    /*
-        DELETE CLEAR
-    */
-
-    if(
-        event.key==="Delete"
-    ){
+    if(e.key==="Delete")
 
         clearBtn.click();
 
-    }
 
 
 });
+
+
+
+
+
+
+
+// START
+
+createProject();
+
+buildCanvas();
+
+updateTimeline();
