@@ -2,88 +2,175 @@
 <html lang="en">
 
 <head>
+
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Braille Studio</title>
 
     <link rel="stylesheet" href="style.css">
+
 </head>
 
 
 <body>
 
+
 <header class="topbar">
 
-    <h1>⠃⠗⠁⠊⠇⠇⠑ Studio</h1>
+    <div class="logo">
+        ⠃⠗⠁⠊⠇⠇⠑ Studio
+    </div>
 
-    <div class="controls">
 
-        <button id="undoBtn">Undo</button>
-        <button id="redoBtn">Redo</button>
+    <div class="toolbar">
+
+
+        <button id="undoBtn">
+            ↶ Undo
+        </button>
+
+
+        <button id="redoBtn">
+            ↷ Redo
+        </button>
+
 
         <button id="clearBtn">
             Clear
         </button>
 
-        <button id="addFrameBtn">
-            + Frame
-        </button>
 
         <button id="playBtn">
             ▶ Play
         </button>
 
+
+        <label>
+            FPS
+
+            <input
+                id="fpsInput"
+                type="number"
+                value="12"
+                min="1"
+                max="60"
+            >
+
+        </label>
+
+
     </div>
+
 
 </header>
 
 
 
-<div class="app">
 
 
-    <!-- LEFT TOOL PANEL -->
+<div class="layout">
+
+
+
+    <!-- LEFT PANEL -->
 
     <aside class="sidebar">
 
-        <h2>Tools</h2>
+
+        <h2>
+            Tools
+        </h2>
 
 
         <button class="tool active">
-            Pencil
+            ✏ Pencil
         </button>
 
 
         <button class="tool">
-            Select
+            🧽 Eraser
         </button>
+
 
 
         <hr>
 
 
-        <h3>Export</h3>
+
+        <h2>
+            Canvas
+        </h2>
+
+
+
+        <label>
+            Width
+
+            <input
+                id="widthInput"
+                type="number"
+                value="16"
+                min="1"
+                max="50"
+            >
+
+        </label>
+
+
+
+        <label>
+            Height
+
+            <input
+                id="heightInput"
+                type="number"
+                value="4"
+                min="1"
+                max="20"
+            >
+
+        </label>
+
+
+
+        <button id="resizeBtn">
+            Resize Canvas
+        </button>
+
+
+
+        <hr>
+
+
+
+        <h2>
+            Files
+        </h2>
+
 
         <button id="copyBtn">
             Copy Braille
         </button>
 
 
-        <button id="exportBtn">
-            Export JSON
+        <button id="saveBtn">
+            Save Project
         </button>
 
 
-        <input 
+        <button id="loadBtn">
+            Load Project
+        </button>
+
+
+        <input
+            id="fileInput"
             type="file"
-            id="importInput"
+            accept=".json"
             hidden
         >
-
-        <button id="importBtn">
-            Import JSON
-        </button>
 
 
     </aside>
@@ -91,66 +178,60 @@
 
 
 
-    <!-- CENTER EDITOR -->
+
+
+    <!-- CENTER -->
 
     <main class="workspace">
 
 
-        <section class="canvas-panel">
+
+        <section class="canvas-area">
 
 
             <h2>
-                Canvas
+                Editor
             </h2>
 
 
-            <div id="canvas"
-                 class="braille-grid">
+            <div
+                id="canvas"
+                class="braille-canvas">
             </div>
-
 
 
         </section>
 
 
 
-        <section class="timeline-panel">
 
 
-            <div class="timeline-header">
+        <section class="timeline-area">
+
+
+            <div class="timeline-title">
 
                 <h2>
                     Timeline
                 </h2>
 
 
-                <label>
-
-                    FPS:
-
-                    <input
-                        id="fps"
-                        type="number"
-                        value="12"
-                        min="1"
-                        max="60"
-                    >
-
-                </label>
+                <button id="addFrameBtn">
+                    + Frame
+                </button>
 
 
             </div>
 
 
 
-            <div id="timeline"
-                 class="timeline">
+            <div
+                id="timeline"
+                class="timeline">
             </div>
-
 
 
         </section>
-
 
 
     </main>
@@ -159,8 +240,8 @@
 
 
 
-    <!-- RIGHT PREVIEW -->
 
+    <!-- RIGHT PANEL -->
 
     <aside class="preview-panel">
 
@@ -170,24 +251,54 @@
         </h2>
 
 
-        <div id="preview"
-             class="preview">
-             
+        <div
+            id="preview"
+            class="preview">
         </div>
 
 
 
-        <div class="status">
+        <h3>
+            Current Frame
+        </h3>
 
-            Frame:
-            <span id="frameNumber">
-                1
-            </span>
+
+        <div id="frameLabel">
+            1
+        </div>
+
+
+
+
+        <h2>
+            Project Info
+        </h2>
+
+
+        <div class="info">
+
+
+            <p>
+                Characters:
+                <span id="characterCount">
+                    64
+                </span>
+            </p>
+
+
+            <p>
+                Braille:
+            </p>
+
+
+            <pre id="output"></pre>
+
 
         </div>
 
 
     </aside>
+
 
 
 </div>
@@ -197,6 +308,7 @@
 
 
 <script src="script.js"></script>
+
 
 </body>
 
