@@ -6,290 +6,425 @@
 
 <style>
 * {
-    box-sizing: border-box;
-    font-family: Inter, system-ui, sans-serif;
+    box-sizing:border-box;
+    font-family:Inter,system-ui,sans-serif;
 }
 
 body {
-    margin: 0;
-    background: #0b0b0c;
-    color: #ddd;
+    margin:0;
+    background:#0b0b0c;
+    color:#ddd;
 }
 
 header {
-    height: 60px;
-    border-bottom: 1px solid #252525;
-    display: flex;
-    align-items: center;
-    padding: 0 25px;
-    font-weight: 700;
-    font-size: 18px;
+    height:60px;
+    border-bottom:1px solid #252525;
+    display:flex;
+    align-items:center;
+    padding:0 25px;
+    font-weight:700;
+    font-size:18px;
 }
 
 header span {
-    color: #888;
-    margin-left: 10px;
-    font-weight: 400;
+    color:#888;
+    margin-left:10px;
+    font-weight:400;
 }
 
 .container {
-    padding: 25px;
-    display: grid;
-    gap: 20px;
+    padding:25px;
+    display:grid;
+    gap:20px;
 }
 
 .card {
-    background: #151516;
-    border: 1px solid #292929;
-    border-radius: 12px;
-    padding: 20px;
+    background:#151516;
+    border:1px solid #292929;
+    border-radius:12px;
+    padding:20px;
 }
 
 .title {
-    font-size: 14px;
-    color: #aaa;
-    margin-bottom: 12px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    color:#aaa;
+    font-size:13px;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    margin-bottom:12px;
 }
 
 textarea {
-    width: 100%;
-    min-height: 230px;
-    resize: vertical;
-    background: #090909;
-    color: #eee;
-    border: 1px solid #333;
-    border-radius: 8px;
-    padding: 15px;
-    font-family: monospace;
+    width:100%;
+    min-height:230px;
+    background:#090909;
+    color:#eee;
+    border:1px solid #333;
+    border-radius:8px;
+    padding:15px;
+    font-family:monospace;
 }
 
+
+.file-box {
+    border:1px dashed #444;
+    border-radius:10px;
+    padding:20px;
+    text-align:center;
+    cursor:pointer;
+    margin-bottom:15px;
+    background:#101011;
+}
+
+.file-box:hover {
+    border-color:#777;
+}
+
+
+input[type=file] {
+    display:none;
+}
+
+
 button {
-    background: #202020;
-    color: white;
-    border: 1px solid #333;
-    padding: 10px 18px;
-    border-radius: 8px;
-    cursor: pointer;
+    background:#202020;
+    color:white;
+    border:1px solid #333;
+    padding:10px 18px;
+    border-radius:8px;
+    cursor:pointer;
 }
 
 button:hover {
-    background: #2c2c2c;
+    background:#2c2c2c;
 }
 
-.outputs {
-    display: grid;
-    gap: 15px;
-}
-
-.output {
-    position: relative;
-}
 
 pre {
-    background: #090909;
-    border: 1px solid #333;
-    border-radius: 8px;
-    padding: 15px;
-    overflow-x: auto;
-    min-height: 80px;
-    color: #ddd;
+    background:#090909;
+    border:1px solid #333;
+    border-radius:8px;
+    padding:15px;
+    overflow:auto;
+    min-height:70px;
+    font-family:monospace;
 }
 
+
+.output {
+    position:relative;
+}
+
+
 .copy {
-    position: absolute;
-    right: 15px;
-    top: 35px;
+    position:absolute;
+    right:15px;
+    top:30px;
+}
+
+#fileName {
+    color:#888;
+    font-size:14px;
 }
 </style>
+
 </head>
 
 <body>
 
+
 <header>
-    ✦ Braille Converter
-    <span>DAB → JSON / Java</span>
+✦ Braille Converter
+<span>DAB → JSON / Java</span>
 </header>
 
 
 <div class="container">
 
-<div class="card">
-<div class="title">DAB JSON Input</div>
 
-<textarea id="input" placeholder="Paste DAB JSON here..."></textarea>
+<div class="card">
+
+<div class="title">
+DAB JSON Input
+</div>
+
+
+<label class="file-box">
+
+📂 Choose JSON File
+
+<input id="fileInput" type="file" accept=".json">
+
+</label>
+
+
+<div id="fileName">
+No file selected
+</div>
+
+
+<br>
+
+
+<textarea id="input"
+placeholder="Or paste DAB JSON here..."></textarea>
+
 
 <br><br>
 
-<button onclick="convert()">Convert</button>
+
+<button onclick="convert()">
+Convert
+</button>
+
 
 </div>
 
 
-<div class="card outputs">
+
+
+<div class="card">
 
 <div class="output">
-<div class="title">Clean JSON</div>
-<button class="copy" onclick="copyText('jsonOut')">Copy</button>
+
+<div class="title">
+Clean JSON
+</div>
+
+<button class="copy" onclick="copyText('jsonOut')">
+Copy
+</button>
+
 <pre id="jsonOut"></pre>
+
 </div>
 
 
+
 <div class="output">
-<div class="title">Java Public Class</div>
-<button class="copy" onclick="copyText('javaOut')">Copy</button>
+
+<div class="title">
+Java Public Class
+</div>
+
+<button class="copy" onclick="copyText('javaOut')">
+Copy
+</button>
+
 <pre id="javaOut"></pre>
+
 </div>
+
 
 
 <div class="output">
-<div class="title">Java String Array</div>
-<button class="copy" onclick="copyText('stringOut')">Copy</button>
+
+<div class="title">
+Java String Array
+</div>
+
+<button class="copy" onclick="copyText('stringOut')">
+Copy
+</button>
+
 <pre id="stringOut"></pre>
+
+</div>
+
+
 </div>
 
 
 </div>
-
-</div>
-
 
 <script>
 
-const DOT_BITS = [
-    [0x01, 0x08],
-    [0x02, 0x10],
-    [0x04, 0x20],
-    [0x40, 0x80]
+
+const DOT_BITS=[
+[0x01,0x08],
+[0x02,0x10],
+[0x04,0x20],
+[0x40,0x80]
 ];
 
 
-function gridToBraille(grid) {
+function gridToBraille(grid){
 
-    let mask = 0;
+    let mask=0;
 
     for(let r=0;r<4;r++){
         for(let c=0;c<2;c++){
 
-            if(grid[r][c]){
+            if(grid[r][c])
                 mask |= DOT_BITS[r][c];
-            }
 
         }
     }
 
-    return String.fromCodePoint(0x2800 + mask);
+    return String.fromCodePoint(0x2800+mask);
 }
 
 
 
 function convert(){
 
-    let data;
+let data;
 
-    try{
-        data = JSON.parse(
-            document.getElementById("input").value
-        );
-    }
-    catch(e){
-        alert("Invalid JSON");
-        return;
-    }
+try{
 
+data=JSON.parse(
+document.getElementById("input").value
+);
 
-    let frames = data.frames.map(frame => {
+}
 
-        let chars=[];
+catch(e){
 
-        let rows = data.cellRows || 1;
-        let cols = data.cellCols || 1;
+alert("Invalid JSON");
+return;
 
-
-        for(let y=0;y<rows;y++){
-
-            let line="";
-
-            for(let x=0;x<cols;x++){
-
-                let cell=[];
-
-                for(let r=0;r<4;r++){
-
-                    cell.push(
-                        frame[y*4+r].slice(
-                            x*2,
-                            x*2+2
-                        )
-                    );
-
-                }
-
-                line += gridToBraille(cell);
-
-            }
-
-            chars.push(line);
-
-        }
-
-
-        return chars.join("\n");
-
-    });
+}
 
 
 
-    let clean = {
-
-        fps:data.fps || 0,
-
-        loop:data.loop || false,
-
-        bounce:data.bounce || false,
-
-        frames:frames
-
-    };
+let frames=data.frames.map(frame=>{
 
 
-    document.getElementById("jsonOut").textContent =
-        JSON.stringify(clean,null,2);
+let chars=[];
+
+
+let rows=data.cellRows||1;
+let cols=data.cellCols||1;
+
+
+for(let y=0;y<rows;y++){
+
+let line="";
+
+
+for(let x=0;x<cols;x++){
+
+
+let cell=[];
+
+
+for(let r=0;r<4;r++){
+
+cell.push(
+frame[y*4+r].slice(
+x*2,
+x*2+2
+)
+);
+
+}
+
+
+line+=gridToBraille(cell);
+
+}
+
+
+chars.push(line);
+
+}
+
+
+return chars.join("\n");
+
+
+});
 
 
 
-    document.getElementById("javaOut").textContent =
+let clean={
+
+fps:data.fps||0,
+
+loop:data.loop||false,
+
+bounce:data.bounce||false,
+
+frames:frames
+
+};
+
+
+
+jsonOut.textContent=
+JSON.stringify(clean,null,2);
+
+
+
+javaOut.textContent=
 `public class Animation {
 
-    public static final int FPS = ${data.fps || 0};
+    public static final int FPS = ${data.fps||0};
 
     public static final String[] FRAMES = {
-${frames.map(f => `        "${f}"`).join(",\n")}
+
+${frames.map(x=>`        "${x}"`).join(",\n")}
+
     };
 
 }`;
 
 
 
-    document.getElementById("stringOut").textContent =
+stringOut.textContent=
 `String[] frames = {
-${frames.map(f => `    "${f}"`).join(",\n")}
+
+${frames.map(x=>`    "${x}"`).join(",\n")}
+
 };`;
 
 }
 
 
 
+
+
+document.getElementById("fileInput")
+.addEventListener("change",function(e){
+
+
+const file=e.target.files[0];
+
+if(!file)return;
+
+
+fileName.textContent=file.name;
+
+
+const reader=new FileReader();
+
+
+reader.onload=function(event){
+
+input.value=event.target.result;
+
+};
+
+
+reader.readAsText(file);
+
+
+});
+
+
+
+
+
 function copyText(id){
 
-    navigator.clipboard.writeText(
-        document.getElementById(id).textContent
-    );
+navigator.clipboard.writeText(
+document.getElementById(id).textContent
+);
 
 }
 
+
 </script>
+
 
 </body>
 </html>
