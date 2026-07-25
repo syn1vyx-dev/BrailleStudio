@@ -558,3 +558,292 @@ playBtn.onclick=()=>{
 buildCanvas();
 
 updateTimeline();
+
+/*
+    EXPORT / IMPORT
+*/
+
+
+const copyBtn =
+    document.getElementById("copyBtn");
+
+
+const exportBtn =
+    document.getElementById("exportBtn");
+
+
+const importBtn =
+    document.getElementById("importBtn");
+
+
+const importInput =
+    document.getElementById("importInput");
+
+
+
+
+
+/*
+    COPY BRAILLE
+*/
+
+
+copyBtn.onclick = async()=>{
+
+
+    await navigator.clipboard.writeText(
+        getBraille()
+    );
+
+
+    copyBtn.textContent =
+        "Copied!";
+
+
+    setTimeout(()=>{
+
+        copyBtn.textContent =
+            "Copy Braille";
+
+    },1000);
+
+
+};
+
+
+
+
+
+
+
+
+/*
+    EXPORT PROJECT
+*/
+
+
+exportBtn.onclick=()=>{
+
+
+    const project={
+
+        name:
+            "Braille Studio Project",
+
+
+        version:
+            "0.1",
+
+
+        fps:
+            Number(fpsInput.value),
+
+
+        frames:
+            frames
+
+
+    };
+
+
+
+    const blob =
+        new Blob(
+            [
+                JSON.stringify(
+                    project,
+                    null,
+                    2
+                )
+            ],
+            {
+                type:
+                "application/json"
+            }
+        );
+
+
+
+    const url =
+        URL.createObjectURL(blob);
+
+
+
+    const link =
+        document.createElement("a");
+
+
+    link.href=url;
+
+
+    link.download =
+        "braille-project.json";
+
+
+    link.click();
+
+
+
+    URL.revokeObjectURL(url);
+
+
+};
+
+
+
+
+
+
+
+
+/*
+    IMPORT PROJECT
+*/
+
+
+importBtn.onclick=()=>{
+
+
+    importInput.click();
+
+
+};
+
+
+
+
+
+importInput.onchange=(event)=>{
+
+
+    const file =
+        event.target.files[0];
+
+
+    if(!file)
+        return;
+
+
+
+    const reader =
+        new FileReader();
+
+
+
+    reader.onload=()=>{
+
+
+        const project =
+            JSON.parse(
+                reader.result
+            );
+
+
+
+        frames =
+            project.frames;
+
+
+
+        fpsInput.value =
+            project.fps || 12;
+
+
+
+        currentFrame=0;
+
+
+
+        buildCanvas();
+
+        updateTimeline();
+
+
+    };
+
+
+
+    reader.readAsText(file);
+
+
+};
+
+
+
+
+
+
+
+
+
+
+/*
+    KEYBOARD SHORTCUTS
+*/
+
+
+document.addEventListener(
+"keydown",
+(event)=>{
+
+
+    /*
+        CTRL + Z
+    */
+
+    if(
+        event.ctrlKey &&
+        event.key==="z"
+    ){
+
+        undoBtn.click();
+
+    }
+
+
+
+    /*
+        CTRL + Y
+    */
+
+    if(
+        event.ctrlKey &&
+        event.key==="y"
+    ){
+
+        redoBtn.click();
+
+    }
+
+
+
+    /*
+        SPACE PLAY
+    */
+
+    if(
+        event.code==="Space"
+    ){
+
+        event.preventDefault();
+
+        playBtn.click();
+
+    }
+
+
+
+    /*
+        DELETE CLEAR
+    */
+
+    if(
+        event.key==="Delete"
+    ){
+
+        clearBtn.click();
+
+    }
+
+
+});
