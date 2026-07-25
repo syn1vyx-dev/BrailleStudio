@@ -1,78 +1,50 @@
-// ==============================
-// Braille Studio v0.2 Engine
-// ==============================
+// =====================================
+// Braille Studio v0.2.1
+// Core Editor Engine
+// =====================================
 
 
-// Elements
+const canvas = document.getElementById("canvas");
+const preview = document.getElementById("preview");
+const output = document.getElementById("output");
+const timeline = document.getElementById("timeline");
 
-const canvas =
-document.getElementById("canvas");
+const frameLabel = document.getElementById("frameLabel");
 
-const preview =
-document.getElementById("preview");
-
-const output =
-document.getElementById("output");
-
-const timeline =
-document.getElementById("timeline");
-
-const frameLabel =
-document.getElementById("frameLabel");
-
-const characterCount =
-document.getElementById("characterCount");
-
-
-
-const widthInput =
-document.getElementById("widthInput");
-
-const heightInput =
-document.getElementById("heightInput");
-
-const fpsInput =
-document.getElementById("fpsInput");
-
+const widthInput = document.getElementById("widthInput");
+const heightInput = document.getElementById("heightInput");
+const fpsInput = document.getElementById("fpsInput");
 
 
 // Buttons
 
-const undoBtn =
-document.getElementById("undoBtn");
+const undoBtn = document.getElementById("undoBtn");
+const redoBtn = document.getElementById("redoBtn");
+const clearBtn = document.getElementById("clearBtn");
 
-const redoBtn =
-document.getElementById("redoBtn");
+const playBtn = document.getElementById("playBtn");
 
-const clearBtn =
-document.getElementById("clearBtn");
+const pencilBtn = document.getElementById("pencilBtn");
+const eraserBtn = document.getElementById("eraserBtn");
 
-const playBtn =
-document.getElementById("playBtn");
+const resizeBtn = document.getElementById("resizeBtn");
 
-const addFrameBtn =
-document.getElementById("addFrameBtn");
+const addFrameBtn = document.getElementById("addFrameBtn");
+const duplicateBtn = document.getElementById("duplicateBtn");
+const deleteFrameBtn = document.getElementById("deleteFrameBtn");
 
-const resizeBtn =
-document.getElementById("resizeBtn");
+const copyBtn = document.getElementById("copyBtn");
 
-const copyBtn =
-document.getElementById("copyBtn");
-
-const saveBtn =
-document.getElementById("saveBtn");
-
-const loadBtn =
-document.getElementById("loadBtn");
-
-const fileInput =
-document.getElementById("fileInput");
+const saveBtn = document.getElementById("saveBtn");
+const loadBtn = document.getElementById("loadBtn");
+const fileInput = document.getElementById("fileInput");
 
 
 
-// ==============================
+
+// =====================================
 // SETTINGS
-// ==============================
+// =====================================
 
 
 let width = 16;
@@ -84,74 +56,89 @@ let frames = [];
 let currentFrame = 0;
 
 
-let drawing = false;
+let currentTool = "pencil";
 
-let eraseMode = false;
+
+let drawing = false;
 
 
 let undoStack = [];
-
 let redoStack = [];
 
 
 let playing = false;
-
 let timer;
 
 
 
 
 
-// ==============================
-// BRAILLE DICTIONARY
-// ==============================
+
+// =====================================
+// BRAILLE DATABASE
+// =====================================
 
 
 const brailleDictionary = [];
 
-
 for(let i = 0; i < 256; i++){
 
     brailleDictionary[i] =
-    String.fromCharCode(0x2800 + i);
-
-}
-
-
-
-
-
-// ==============================
-// FRAME CREATION
-// ==============================
-
-
-function createFrame(){
-
-
-    let cells =
-    width * height;
-
-
-    return Array.from(
-        {length: cells},
-        ()=>Array(8).fill(false)
+    String.fromCharCode(
+        0x2800 + i
     );
 
 }
 
 
 
-function createProject(){
+const dotMap = [
+    0,
+    1,
+    2,
+    6,
+    3,
+    4,
+    5,
+    7
+];
 
+
+
+
+
+
+
+// =====================================
+// FRAME CREATION
+// =====================================
+
+
+function createFrame(){
+
+    return Array.from(
+        {
+            length:
+            width * height
+        },
+
+        () =>
+        Array(8).fill(false)
+
+    );
+
+}
+
+
+
+
+function resetProject(){
 
     frames = [
         createFrame()
     ];
 
-
     currentFrame = 0;
-
 
 }
 
@@ -161,63 +148,68 @@ function createProject(){
 
 
 
-// ==============================
-// CANVAS
-// ==============================
+// =====================================
+// CANVAS BUILDER
+// =====================================
 
 
 function buildCanvas(){
 
-
-    canvas.innerHTML="";
+    canvas.innerHTML = "";
 
 
     canvas.style.gridTemplateColumns =
-    `repeat(${width}, 90px)`;
+    `repeat(${width},90px)`;
 
 
     frames[currentFrame]
-    .forEach((cell, index)=>{
+    .forEach((cell, cellIndex)=>{
 
 
-        let box =
+        const cellBox =
         document.createElement("div");
 
 
-        box.className="cell";
+        cellBox.className =
+        "cell";
 
 
 
-        for(let i=0;i<8;i++){
+        for(let dot = 0; dot < 8; dot++){
 
 
-            let dot =
+            const dotElement =
             document.createElement("div");
 
 
-            dot.className="dot";
-
-
-            if(cell[i])
-                dot.classList.add("active");
+            dotElement.className =
+            "dot";
 
 
 
-            dot.onmousedown=(e)=>{
+            if(cell[dot]){
+
+                dotElement.classList.add(
+                    "active"
+                );
+
+            }
+
+
+
+            dotElement.onmousedown = (e)=>{
 
 
                 saveUndo();
 
 
-                drawing=true;
-
-                eraseMode=e.shiftKey;
+                drawing = true;
 
 
                 paint(
-                    index,
-                    i,
-                    dot
+                    cellIndex,
+                    dot,
+                    dotElement
                 );
 
 
@@ -225,21 +217,16 @@ function buildCanvas(){
 
 
 
-            dot.onmouseenter=(e)=>{
+            dotElement.onmouseenter = ()=>{
 
 
                 if(drawing){
 
-
-                    eraseMode=e.shiftKey;
-
-
                     paint(
-                        index,
-                        i,
-                        dot
+                        cellIndex,
+                        dot,
+                        dotElement
                     );
-
 
                 }
 
@@ -247,18 +234,21 @@ function buildCanvas(){
 
 
 
-            box.appendChild(dot);
+            cellBox.appendChild(
+                dotElement
+            );
+
 
         }
 
 
 
-        canvas.appendChild(box);
-
+        canvas.appendChild(
+            cellBox
+        );
 
 
     });
-
 
 
     update();
@@ -269,9 +259,9 @@ function buildCanvas(){
 
 
 
-document.body.onmouseup=()=>{
+document.body.onmouseup = ()=>{
 
-    drawing=false;
+    drawing = false;
 
 };
 
@@ -281,27 +271,43 @@ document.body.onmouseup=()=>{
 
 
 
+// =====================================
+// DRAWING
+// =====================================
 
-function paint(cell,dot,element){
+
+function paint(cell, dot, element){
+
+
+    let value =
+    currentTool === "pencil";
 
 
     frames[currentFrame][cell][dot]
     =
-    !eraseMode;
+    value;
 
 
-    if(eraseMode)
 
-        element.classList.remove("active");
+    if(value){
 
-    else
+        element.classList.add(
+            "active"
+        );
 
-        element.classList.add("active");
+    }
+
+    else{
+
+        element.classList.remove(
+            "active"
+        );
+
+    }
 
 
 
     update();
-
 
 }
 
@@ -310,43 +316,34 @@ function paint(cell,dot,element){
 
 
 
-
-
-
-// ==============================
-// BRAILLE CONVERSION
-// ==============================
-
-
-const map = [
-0,1,2,6,
-3,4,5,7
-];
-
+// =====================================
+// BRAILLE OUTPUT
+// =====================================
 
 
 function getBraille(){
 
 
-    let result="";
+    let result = "";
 
 
     frames[currentFrame]
     .forEach(cell=>{
 
 
-        let value=0;
+        let value = 0;
 
 
 
-        for(let i=0;i<8;i++){
+        for(let i = 0; i < 8; i++){
 
 
-            if(cell[i])
+            if(cell[i]){
 
                 value +=
-                1 << map[i];
+                1 << dotMap[i];
 
+            }
 
         }
 
@@ -359,13 +356,9 @@ function getBraille(){
     });
 
 
-
     return result;
 
 }
-
-
-
 
 
 
@@ -378,25 +371,16 @@ function update(){
     getBraille();
 
 
-
     preview.textContent =
     text;
-
 
 
     output.textContent =
     text;
 
 
-
-    characterCount.textContent =
-    width * height;
-
-
-
     frameLabel.textContent =
-    currentFrame+1;
-
+    currentFrame + 1;
 
 }
 
@@ -406,42 +390,47 @@ function update(){
 
 
 
-// ==============================
+// =====================================
 // TIMELINE
-// ==============================
+// =====================================
 
 
 function updateTimeline(){
 
 
-    timeline.innerHTML="";
+    timeline.innerHTML = "";
 
 
     frames.forEach((frame,index)=>{
 
 
-        let item =
+        const item =
         document.createElement("div");
 
 
-        item.className="frame";
+        item.className =
+        "frame";
 
 
-        if(index===currentFrame)
+        if(index === currentFrame){
 
-            item.classList.add("active");
+            item.classList.add(
+                "active"
+            );
 
+        }
 
 
         item.textContent =
-        index+1;
+        index + 1;
 
 
 
-        item.onclick=()=>{
+        item.onclick = ()=>{
 
 
-            currentFrame=index;
+            currentFrame = index;
+
 
             buildCanvas();
 
@@ -449,7 +438,6 @@ function updateTimeline(){
 
 
         };
-
 
 
         timeline.appendChild(item);
@@ -465,7 +453,67 @@ function updateTimeline(){
 
 
 
-addFrameBtn.onclick=()=>{
+
+
+// =====================================
+// TOOLS
+// =====================================
+
+
+pencilBtn.onclick = ()=>{
+
+
+    currentTool =
+    "pencil";
+
+
+    pencilBtn.classList.add(
+        "active"
+    );
+
+
+    eraserBtn.classList.remove(
+        "active"
+    );
+
+
+};
+
+
+
+
+
+eraserBtn.onclick = ()=>{
+
+
+    currentTool =
+    "eraser";
+
+
+    eraserBtn.classList.add(
+        "active"
+    );
+
+
+    pencilBtn.classList.remove(
+        "active"
+    );
+
+
+};
+
+
+
+
+
+
+
+// =====================================
+// FRAMES
+// =====================================
+
+
+addFrameBtn.onclick = ()=>{
 
 
     frames.push(
@@ -474,7 +522,71 @@ addFrameBtn.onclick=()=>{
 
 
     currentFrame =
-    frames.length-1;
+    frames.length - 1;
+
+
+    buildCanvas();
+
+    updateTimeline();
+
+
+};
+
+
+
+
+
+duplicateBtn.onclick = ()=>{
+
+
+    frames.splice(
+
+        currentFrame + 1,
+
+        0,
+
+        JSON.parse(
+            JSON.stringify(
+                frames[currentFrame]
+            )
+        )
+
+    );
+
+
+    currentFrame++;
+
+
+    buildCanvas();
+
+    updateTimeline();
+
+
+};
+
+
+
+
+
+deleteFrameBtn.onclick = ()=>{
+
+
+    if(frames.length <= 1)
+        return;
+
+
+
+    frames.splice(
+        currentFrame,
+        1
+    );
+
+
+    currentFrame =
+    Math.max(
+        0,
+        currentFrame - 1
+    );
 
 
     buildCanvas();
@@ -491,12 +603,12 @@ addFrameBtn.onclick=()=>{
 
 
 
-// ==============================
+// =====================================
 // RESIZE
-// ==============================
+// =====================================
 
 
-resizeBtn.onclick=()=>{
+resizeBtn.onclick = ()=>{
 
 
     width =
@@ -508,7 +620,7 @@ resizeBtn.onclick=()=>{
 
 
 
-    createProject();
+    resetProject();
 
 
     buildCanvas();
@@ -524,27 +636,28 @@ resizeBtn.onclick=()=>{
 
 
 
-// ==============================
-// UNDO REDO
-// ==============================
+
+// =====================================
+// UNDO / REDO
+// =====================================
 
 
 function saveUndo(){
-
 
     undoStack.push(
         JSON.stringify(frames)
     );
 
 
-    redoStack=[];
-
+    redoStack = [];
 
 }
 
 
 
-undoBtn.onclick=()=>{
+
+
+undoBtn.onclick = ()=>{
 
 
     if(!undoStack.length)
@@ -572,7 +685,8 @@ undoBtn.onclick=()=>{
 
 
 
-redoBtn.onclick=()=>{
+
+redoBtn.onclick = ()=>{
 
 
     if(!redoStack.length)
@@ -602,14 +716,13 @@ redoBtn.onclick=()=>{
 
 
 
-
-clearBtn.onclick=()=>{
+clearBtn.onclick = ()=>{
 
 
     saveUndo();
 
 
-    frames[currentFrame]=
+    frames[currentFrame] =
     createFrame();
 
 
@@ -624,17 +737,17 @@ clearBtn.onclick=()=>{
 
 
 
-
-
-// ==============================
+// =====================================
 // PLAYBACK
-// ==============================
+// =====================================
 
 
-playBtn.onclick=()=>{
+playBtn.onclick = ()=>{
 
 
-    playing=!playing;
+    playing =
+    !playing;
+
 
 
     if(playing){
@@ -644,16 +757,19 @@ playBtn.onclick=()=>{
         "⏸ Pause";
 
 
-        timer=setInterval(()=>{
+
+        timer =
+        setInterval(()=>{
 
 
             currentFrame++;
 
 
-            if(currentFrame>=frames.length)
+            if(currentFrame >= frames.length){
 
-                currentFrame=0;
+                currentFrame = 0;
 
+            }
 
 
             buildCanvas();
@@ -662,8 +778,12 @@ playBtn.onclick=()=>{
 
 
         },
+
+
         1000 /
-        Number(fpsInput.value));
+        Number(fpsInput.value)
+
+        );
 
 
     }
@@ -677,7 +797,6 @@ playBtn.onclick=()=>{
 
         clearInterval(timer);
 
-
     }
 
 
@@ -689,16 +808,29 @@ playBtn.onclick=()=>{
 
 
 
-
-// ==============================
-// SAVE LOAD
-// ==============================
-
-
-saveBtn.onclick=()=>{
+// =====================================
+// FILES
+// =====================================
 
 
-    let data={
+copyBtn.onclick = ()=>{
+
+
+    navigator.clipboard.writeText(
+        getBraille()
+    );
+
+
+};
+
+
+
+
+
+saveBtn.onclick = ()=>{
+
+
+    const project = {
 
         width,
 
@@ -712,39 +844,42 @@ saveBtn.onclick=()=>{
     };
 
 
-    let blob =
+    const blob =
     new Blob(
         [
             JSON.stringify(
-                data,
+                project,
                 null,
                 2
             )
         ],
+
         {
             type:
             "application/json"
         }
+
     );
 
 
 
-    let url =
+    const url =
     URL.createObjectURL(blob);
 
 
 
-    let a =
+    const link =
     document.createElement("a");
 
 
-    a.href=url;
+    link.href = url;
 
-    a.download=
+
+    link.download =
     "braille-project.json";
 
 
-    a.click();
+    link.click();
 
 
 };
@@ -753,8 +888,7 @@ saveBtn.onclick=()=>{
 
 
 
-
-loadBtn.onclick=()=>{
+loadBtn.onclick = ()=>{
 
     fileInput.click();
 
@@ -763,40 +897,56 @@ loadBtn.onclick=()=>{
 
 
 
-fileInput.onchange=(e)=>{
+
+fileInput.onchange = (e)=>{
 
 
-    let file =
+    const file =
     e.target.files[0];
 
 
-    let reader =
+    if(!file)
+        return;
+
+
+
+    const reader =
     new FileReader();
 
 
 
-    reader.onload=()=>{
+    reader.onload = ()=>{
 
 
-        let data =
+        const project =
         JSON.parse(
             reader.result
         );
 
 
-        width=data.width;
-
-        height=data.height;
-
-        frames=data.frames;
+        width =
+        project.width;
 
 
-        widthInput.value=width;
+        height =
+        project.height;
 
-        heightInput.value=height;
+
+        frames =
+        project.frames;
 
 
-        currentFrame=0;
+
+        widthInput.value =
+        width;
+
+
+        heightInput.value =
+        height;
+
+
+
+        currentFrame = 0;
 
 
         buildCanvas();
@@ -818,36 +968,14 @@ fileInput.onchange=(e)=>{
 
 
 
-
-// ==============================
-// COPY
-// ==============================
-
-
-copyBtn.onclick=()=>{
-
-
-    navigator.clipboard.writeText(
-        getBraille()
-    );
-
-
-};
-
-
-
-
-
-
-
-// ==============================
+// =====================================
 // SHORTCUTS
-// ==============================
+// =====================================
 
 
 document.addEventListener(
 "keydown",
-e=>{
+(e)=>{
 
 
     if(e.ctrlKey && e.key==="z")
@@ -871,9 +999,7 @@ e=>{
 
 
     if(e.key==="Delete")
-
         clearBtn.click();
-
 
 
 });
@@ -886,7 +1012,8 @@ e=>{
 
 // START
 
-createProject();
+
+resetProject();
 
 buildCanvas();
 
