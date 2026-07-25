@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Braille Converter</title>
+<title>Braille Studio Converter</title>
 
 <style>
 * {
@@ -12,71 +12,77 @@
 
 body {
     margin:0;
-    background:#0b0b0c;
+    background:#08090b;
     color:#ddd;
 }
 
 header {
-    height:60px;
-    border-bottom:1px solid #252525;
+    height:64px;
     display:flex;
     align-items:center;
-    padding:0 25px;
+    padding:0 30px;
+    border-bottom:1px solid #252525;
+    font-size:20px;
     font-weight:700;
-    font-size:18px;
 }
 
 header span {
-    color:#888;
-    margin-left:10px;
+    color:#777;
+    margin-left:12px;
+    font-size:14px;
     font-weight:400;
 }
+
 
 .container {
     padding:25px;
     display:grid;
+    grid-template-columns:1fr 1fr;
     gap:20px;
 }
 
+
 .card {
-    background:#151516;
+    background:#131416;
     border:1px solid #292929;
-    border-radius:12px;
+    border-radius:14px;
     padding:20px;
 }
 
+
 .title {
-    color:#aaa;
-    font-size:13px;
+    color:#999;
+    font-size:12px;
     letter-spacing:1px;
     text-transform:uppercase;
-    margin-bottom:12px;
+    margin-bottom:15px;
 }
+
 
 textarea {
     width:100%;
-    min-height:230px;
-    background:#090909;
+    height:260px;
+    background:#070707;
     color:#eee;
     border:1px solid #333;
-    border-radius:8px;
+    border-radius:10px;
     padding:15px;
+    resize:vertical;
     font-family:monospace;
 }
 
 
-.file-box {
-    border:1px dashed #444;
-    border-radius:10px;
-    padding:20px;
+.drop {
+    border:2px dashed #444;
+    padding:25px;
     text-align:center;
+    border-radius:12px;
     cursor:pointer;
-    margin-bottom:15px;
-    background:#101011;
+    background:#101113;
 }
 
-.file-box:hover {
-    border-color:#777;
+.drop:hover {
+    border-color:#888;
 }
 
 
@@ -85,80 +91,118 @@ input[type=file] {
 }
 
 
+.buttons {
+    display:flex;
+    gap:10px;
+    margin-top:15px;
+}
+
+
 button {
-    background:#202020;
-    color:white;
+    background:#202124;
     border:1px solid #333;
-    padding:10px 18px;
+    color:white;
+    padding:10px 16px;
     border-radius:8px;
     cursor:pointer;
 }
 
 button:hover {
-    background:#2c2c2c;
+    background:#303136;
 }
 
 
 pre {
-    background:#090909;
+    background:#070707;
     border:1px solid #333;
-    border-radius:8px;
+    border-radius:10px;
     padding:15px;
     overflow:auto;
-    min-height:70px;
-    font-family:monospace;
+    min-height:120px;
+    white-space:pre-wrap;
 }
 
 
 .output {
     position:relative;
+    margin-bottom:25px;
 }
 
 
 .copy {
     position:absolute;
-    right:15px;
-    top:30px;
+    right:0;
+    top:-5px;
 }
 
-#fileName {
+
+.preview {
+
+    font-family:monospace;
+    font-size:30px;
+    line-height:1.2;
+    background:#050505;
+    border-radius:10px;
+    padding:20px;
+    min-height:120px;
+}
+
+
+.status {
+
+    margin-top:10px;
     color:#888;
     font-size:14px;
+
 }
+
+
+@media(max-width:900px){
+
+.container {
+    grid-template-columns:1fr;
+}
+
+}
+
 </style>
 
 </head>
+
 
 <body>
 
 
 <header>
-✦ Braille Converter
-<span>DAB → JSON / Java</span>
+✦ Braille Studio
+<span>DAB → Braille → Java</span>
 </header>
+
 
 
 <div class="container">
 
 
+
 <div class="card">
 
+
 <div class="title">
-DAB JSON Input
+Input
 </div>
 
 
-<label class="file-box">
+<label class="drop">
 
-📂 Choose JSON File
+📂 Drop JSON / Choose File
 
-<input id="fileInput" type="file" accept=".json">
+<input id="fileInput" type="file" accept=".json,.dab">
 
 </label>
 
 
-<div id="fileName">
-No file selected
+<div id="fileName" class="status">
+No file loaded
 </div>
 
 
@@ -166,15 +210,24 @@ No file selected
 
 
 <textarea id="input"
-placeholder="Or paste DAB JSON here..."></textarea>
+placeholder="Paste DAB JSON here..."></textarea>
 
 
-<br><br>
-
+<div class="buttons">
 
 <button onclick="convert()">
 Convert
 </button>
+
+
+<button onclick="clearAll()">
+Clear
+</button>
+
+</div>
+
+
+<div id="status" class="status"></div>
 
 
 </div>
@@ -182,7 +235,52 @@ Convert
 
 
 
+
 <div class="card">
+
+
+<div class="title">
+Preview
+</div>
+
+
+<div id="preview" class="preview">
+No animation
+</div>
+
+
+<div class="buttons">
+
+<button onclick="previousFrame()">
+◀
+</button>
+
+<button onclick="play()">
+▶ Play
+</button>
+
+<button onclick="stop()">
+■
+</button>
+
+<button onclick="nextFrame()">
+▶
+</button>
+
+</div>
+
+
+<div id="frameInfo" class="status"></div>
+
+
+</div>
+
+
+
+
+
+<div class="card">
+
 
 <div class="output">
 
@@ -190,7 +288,8 @@ Convert
 Clean JSON
 </div>
 
-<button class="copy" onclick="copyText('jsonOut')">
+<button class="copy"
+onclick="copyText('jsonOut')">
 Copy
 </button>
 
@@ -199,14 +298,14 @@ Copy
 </div>
 
 
-
 <div class="output">
 
 <div class="title">
-Java Public Class
+Java Class
 </div>
 
-<button class="copy" onclick="copyText('javaOut')">
+<button class="copy"
+onclick="copyText('javaOut')">
 Copy
 </button>
 
@@ -215,14 +314,14 @@ Copy
 </div>
 
 
-
 <div class="output">
 
 <div class="title">
-Java String Array
+String Array
 </div>
 
-<button class="copy" onclick="copyText('stringOut')">
+<button class="copy"
+onclick="copyText('stringOut')">
 Copy
 </button>
 
@@ -236,6 +335,10 @@ Copy
 
 </div>
 
+
+
+
+
 <script>
 
 
@@ -247,27 +350,41 @@ const DOT_BITS=[
 ];
 
 
+let frames=[];
+let currentFrame=0;
+let timer=null;
+
+
+
 function gridToBraille(grid){
 
-    let mask=0;
+let mask=0;
 
-    for(let r=0;r<4;r++){
-        for(let c=0;c<2;c++){
 
-            if(grid[r][c])
-                mask |= DOT_BITS[r][c];
+for(let r=0;r<4;r++){
 
-        }
-    }
+for(let c=0;c<2;c++){
 
-    return String.fromCodePoint(0x2800+mask);
+if(grid[r][c])
+mask |= DOT_BITS[r][c];
+
 }
+
+}
+
+
+return String.fromCodePoint(0x2800+mask);
+
+}
+
 
 
 
 function convert(){
 
+
 let data;
+
 
 try{
 
@@ -277,23 +394,34 @@ document.getElementById("input").value
 
 }
 
-catch(e){
+catch{
 
-alert("Invalid JSON");
+status.textContent="Invalid JSON";
+
 return;
 
 }
 
 
 
-let frames=data.frames.map(frame=>{
+if(!Array.isArray(data.frames)){
+
+status.textContent="Missing frames array";
+
+return;
+
+}
 
 
-let chars=[];
+
+frames=data.frames.map(frame=>{
 
 
 let rows=data.cellRows||1;
 let cols=data.cellCols||1;
+
+
+let chars=[];
 
 
 for(let y=0;y<rows;y++){
@@ -310,16 +438,15 @@ let cell=[];
 for(let r=0;r<4;r++){
 
 cell.push(
-frame[y*4+r].slice(
-x*2,
-x*2+2
-)
+(frame[y*4+r]||[])
+.slice(x*2,x*2+2)
 );
 
 }
 
 
 line+=gridToBraille(cell);
+
 
 }
 
@@ -339,12 +466,9 @@ return chars.join("\n");
 let clean={
 
 fps:data.fps||0,
-
 loop:data.loop||false,
-
 bounce:data.bounce||false,
-
-frames:frames
+frames
 
 };
 
@@ -358,24 +482,34 @@ JSON.stringify(clean,null,2);
 javaOut.textContent=
 `public class Animation {
 
-    public static final int FPS = ${data.fps||0};
+public static final int FPS=${data.fps||0};
 
-    public static final String[] FRAMES = {
+public static final String[] FRAMES={
 
-${frames.map(x=>`        "${x}"`).join(",\n")}
+${frames.map(f=>"\""+f.replaceAll('"','\\"')+"\"").join(",\n")}
 
-    };
+};
 
 }`;
 
 
 
 stringOut.textContent=
-`String[] frames = {
+`String[] frames={
 
-${frames.map(x=>`    "${x}"`).join(",\n")}
+${frames.map(f=>JSON.stringify(f)).join(",\n")}
 
 };`;
+
+
+
+currentFrame=0;
+
+showFrame();
+
+
+status.textContent=
+`Converted ${frames.length} frames`;
 
 }
 
@@ -383,11 +517,87 @@ ${frames.map(x=>`    "${x}"`).join(",\n")}
 
 
 
-document.getElementById("fileInput")
-.addEventListener("change",function(e){
+function showFrame(){
+
+if(!frames.length)return;
 
 
-const file=e.target.files[0];
+preview.textContent=
+frames[currentFrame];
+
+
+frameInfo.textContent=
+`Frame ${currentFrame+1}/${frames.length}`;
+
+}
+
+
+
+
+
+function nextFrame(){
+
+if(!frames.length)return;
+
+currentFrame++;
+
+if(currentFrame>=frames.length)
+currentFrame=0;
+
+showFrame();
+
+}
+
+
+
+function previousFrame(){
+
+currentFrame--;
+
+if(currentFrame<0)
+currentFrame=frames.length-1;
+
+showFrame();
+
+}
+
+
+
+function play(){
+
+stop();
+
+timer=setInterval(nextFrame,
+1000/10);
+
+}
+
+
+
+function stop(){
+
+clearInterval(timer);
+
+}
+
+
+
+function clearAll(){
+
+input.value="";
+jsonOut.textContent="";
+javaOut.textContent="";
+stringOut.textContent="";
+preview.textContent="No animation";
+frames=[];
+
+}
+
+
+
+fileInput.onchange=e=>{
+
+let file=e.target.files[0];
 
 if(!file)return;
 
@@ -395,20 +605,21 @@ if(!file)return;
 fileName.textContent=file.name;
 
 
-const reader=new FileReader();
+let reader=new FileReader();
 
 
-reader.onload=function(event){
+reader.onload=e=>{
 
-input.value=event.target.result;
+input.value=e.target.result;
+
+convert();
 
 };
 
 
 reader.readAsText(file);
 
-
-});
+};
 
 
 
@@ -419,6 +630,9 @@ function copyText(id){
 navigator.clipboard.writeText(
 document.getElementById(id).textContent
 );
+
+
+status.textContent="Copied";
 
 }
 
