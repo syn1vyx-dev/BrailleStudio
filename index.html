@@ -1,3 +1,9 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Braille Studio Converter</title>
+
 <style>
 
 * {
@@ -11,7 +17,6 @@ body {
     color:#ddd;
 }
 
-
 header {
     height:64px;
     display:flex;
@@ -22,15 +27,12 @@ header {
     font-weight:700;
 }
 
-
 header span {
     color:#777;
     margin-left:12px;
     font-size:14px;
     font-weight:400;
 }
-
-
 
 .container {
     padding:25px;
@@ -39,16 +41,12 @@ header span {
     gap:20px;
 }
 
-
-
 .card {
     background:#131416;
     border:1px solid #292929;
     border-radius:14px;
     padding:20px;
 }
-
-
 
 .title,
 .collapse-title {
@@ -59,58 +57,44 @@ header span {
     margin-bottom:15px;
 }
 
-
-
-/* FILE DROP FIX */
-
 .drop {
-    display:block;
     border:2px dashed #444;
-    padding:28px 20px;
+
+    min-height:110px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
     text-align:center;
+
     border-radius:12px;
     cursor:pointer;
-    background:#101113;
-    transition:.2s;
-    line-height:1.5;
-}
 
+    background:#101113;
+
+    transition:.2s;
+}
 
 .drop:hover {
     border-color:#888;
 }
 
-
 input[type=file] {
     display:none;
 }
 
-
-
 #fileName {
-
-    margin-top:18px;
-
-    padding-left:4px;
-
+    margin-top:12px;
     color:#777;
-
     font-size:14px;
-
 }
 
-
-
-
-
 textarea {
-
     width:100%;
-
     height:260px;
 
     background:#070707;
-
     color:#eee;
 
     border:1px solid #333;
@@ -122,30 +106,17 @@ textarea {
     resize:vertical;
 
     font-family:monospace;
-
 }
-
-
-
 
 .buttons {
-
     display:flex;
-
     gap:10px;
-
     margin-top:15px;
-
 }
 
-
-
 button {
-
     background:#202124;
-
     border:1px solid #333;
-
     color:white;
 
     padding:10px 16px;
@@ -153,35 +124,19 @@ button {
     border-radius:8px;
 
     cursor:pointer;
-
 }
-
-
 
 button:hover {
-
     background:#303136;
-
 }
-
-
-
 
 .status {
-
     color:#888;
-
     font-size:14px;
-
     margin-top:10px;
-
 }
 
-
-
-
 .preview {
-
     font-family:monospace;
 
     font-size:30px;
@@ -197,11 +152,7 @@ button:hover {
     min-height:120px;
 
     white-space:pre;
-
 }
-
-
-
 
 .output {
 
@@ -209,12 +160,9 @@ button:hover {
 
     margin-bottom:35px;
 
+    padding-top:5px;
+
 }
-
-
-
-
-/* COLLAPSIBLE HEADER FIX */
 
 .collapse-title {
 
@@ -224,11 +172,9 @@ button:hover {
 
     padding-right:90px;
 
-    margin-bottom:20px;
+    padding-bottom:8px;
 
 }
-
-
 
 .collapse-title span {
 
@@ -238,30 +184,21 @@ button:hover {
 
 }
 
-
-
-
-
-/* COPY BUTTON FIX */
-
 .copy {
 
     position:absolute;
 
     right:0;
 
-    top:-18px;
+    top:0;
 
-    z-index:5;
+    padding:8px 14px;
 
 }
 
-
-
-
 pre {
 
-    margin-top:10px;
+    margin-top:5px;
 
     background:#070707;
 
@@ -281,10 +218,6 @@ pre {
 
 }
 
-
-
-
-
 @media(max-width:900px){
 
 .container {
@@ -295,5 +228,741 @@ pre {
 
 }
 
-
 </style>
+
+</head>
+
+<body>
+
+<header>
+
+✦ Braille Studio
+
+<span>DAB → Braille → Java</span>
+
+</header>
+
+
+<div class="container">
+
+<div class="card">
+
+<div class="title">
+Input
+</div>
+
+<label class="drop">
+
+📂 Drop JSON / Choose File
+
+<input id="fileInput" type="file" accept=".json,.dab">
+
+</label>
+
+
+<div id="fileName">
+No file loaded
+</div>
+
+
+<br>
+
+
+<textarea id="input"
+placeholder="Paste DAB JSON here..."></textarea>
+
+
+<div class="buttons">
+
+<button onclick="convert()">
+Convert
+</button>
+
+
+<button onclick="clearAll()">
+Clear
+</button>
+
+
+</div>
+
+
+<div id="status" class="status"></div>
+
+
+</div>
+<div class="card">
+
+
+<div class="title">
+Preview
+</div>
+
+
+
+<div id="preview" class="preview">
+No animation
+</div>
+
+
+
+<div class="buttons">
+
+<button onclick="previousFrame()">
+◀
+</button>
+
+
+<button id="playButton" onclick="togglePlay()">
+▶ Play
+</button>
+
+
+<button onclick="nextFrame()">
+▶
+</button>
+
+
+</div>
+
+
+
+<div id="frameInfo" class="status"></div>
+
+
+</div>
+
+
+
+
+
+
+
+<div class="card">
+
+
+<div class="output">
+
+
+<div class="collapse-title"
+onclick="toggleCollapse(this)">
+
+<span>▼</span>
+Clean JSON
+
+</div>
+
+
+<button class="copy"
+onclick="copyText('jsonOut')">
+Copy
+</button>
+
+
+<pre id="jsonOut"></pre>
+
+
+</div>
+
+
+
+
+
+<div class="output">
+
+
+<div class="collapse-title"
+onclick="toggleCollapse(this)">
+
+<span>▼</span>
+Java Class
+
+</div>
+
+
+<button class="copy"
+onclick="copyText('javaOut')">
+Copy
+</button>
+
+
+<pre id="javaOut"></pre>
+
+
+</div>
+
+
+
+
+
+<div class="output">
+
+
+<div class="collapse-title"
+onclick="toggleCollapse(this)">
+
+<span>▼</span>
+String Array
+
+</div>
+
+
+<button class="copy"
+onclick="copyText('stringOut')">
+Copy
+</button>
+
+
+<pre id="stringOut"></pre>
+
+
+</div>
+
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+<script>
+
+
+const DOT_BITS=[
+
+[0x01,0x08],
+
+[0x02,0x10],
+
+[0x04,0x20],
+
+[0x40,0x80]
+
+];
+
+
+
+let frames=[];
+
+let currentFrame=0;
+
+let timer=null;
+
+let fps=10;
+
+
+
+
+
+function gridToBraille(grid){
+
+
+let mask=0;
+
+
+
+for(let r=0;r<4;r++){
+
+for(let c=0;c<2;c++){
+
+
+if(grid[r][c])
+
+mask |= DOT_BITS[r][c];
+
+
+}
+
+}
+
+
+
+return String.fromCodePoint(0x2800+mask);
+
+
+}
+
+
+
+
+
+
+
+function convert(){
+
+
+let data;
+
+
+try{
+
+
+data=JSON.parse(
+document.getElementById("input").value
+);
+
+
+}
+
+catch{
+
+
+status.textContent="Invalid JSON";
+
+return;
+
+}
+
+
+
+
+if(!Array.isArray(data.frames)){
+
+
+status.textContent="No frames found";
+
+return;
+
+
+}
+
+
+
+
+fps=data.fps || 10;
+
+
+
+frames=data.frames.map(frame=>{
+
+
+let rows=data.cellRows || 1;
+
+let cols=data.cellCols || 1;
+
+
+let chars=[];
+
+
+
+for(let y=0;y<rows;y++){
+
+
+let line="";
+
+
+
+for(let x=0;x<cols;x++){
+
+
+
+let cell=[];
+
+
+
+for(let r=0;r<4;r++){
+
+
+cell.push(
+
+(frame[y*4+r] || [])
+
+.slice(x*2,x*2+2)
+
+);
+
+
+}
+
+
+
+line += gridToBraille(cell);
+
+
+
+}
+
+
+chars.push(line);
+
+
+
+}
+
+
+
+return chars.join("\n");
+
+
+});
+
+
+
+
+
+let clean={
+
+fps,
+
+loop:data.loop || false,
+
+bounce:data.bounce || false,
+
+frames
+
+};
+
+
+
+
+document.getElementById("jsonOut").textContent=
+
+JSON.stringify(clean,null,2);
+
+
+
+
+
+document.getElementById("javaOut").textContent=
+
+`public class Animation {
+
+public static final int FPS = ${fps};
+
+public static final String[] FRAMES = {
+
+${frames.map(f=>JSON.stringify(f)).join(",\n")}
+
+};
+
+}`;
+
+
+
+
+
+document.getElementById("stringOut").textContent=
+
+`String[] frames = {
+
+${frames.map(f=>JSON.stringify(f)).join(",\n")}
+
+};`;
+
+
+
+
+
+currentFrame=0;
+
+
+showFrame();
+
+
+
+status.textContent=
+
+`Converted ${frames.length} frames`;
+
+
+
+}
+
+
+
+
+
+
+
+function showFrame(){
+
+
+if(!frames.length)
+
+return;
+
+
+
+preview.textContent=
+
+frames[currentFrame];
+
+
+
+frameInfo.textContent=
+
+`Frame ${currentFrame+1}/${frames.length}`;
+
+
+}
+
+
+
+
+
+
+function nextFrame(){
+
+
+if(!frames.length)
+
+return;
+
+
+
+currentFrame++;
+
+
+
+if(currentFrame>=frames.length)
+
+currentFrame=0;
+
+
+
+showFrame();
+
+
+}
+
+
+
+
+
+function previousFrame(){
+
+
+if(!frames.length)
+
+return;
+
+
+
+currentFrame--;
+
+
+
+if(currentFrame<0)
+
+currentFrame=frames.length-1;
+
+
+
+showFrame();
+
+
+}
+
+
+
+
+
+
+
+function togglePlay(){
+
+
+let button=document.getElementById("playButton");
+
+
+
+if(timer){
+
+
+clearInterval(timer);
+
+timer=null;
+
+
+button.textContent="▶ Play";
+
+
+}
+
+else{
+
+
+timer=setInterval(
+
+nextFrame,
+
+1000/fps
+
+);
+
+
+button.textContent="■ Stop";
+
+
+}
+
+
+
+}
+
+
+
+
+
+
+
+function toggleCollapse(title){
+
+
+let content=
+
+title.nextElementSibling.nextElementSibling;
+
+
+
+let arrow=
+
+title.querySelector("span");
+
+
+
+
+if(content.style.display==="none"){
+
+
+content.style.display="block";
+
+arrow.textContent="▼";
+
+
+}
+
+else{
+
+
+content.style.display="none";
+
+arrow.textContent="▶";
+
+
+}
+
+
+
+}
+
+
+
+
+
+
+
+function copyText(id){
+
+
+navigator.clipboard.writeText(
+
+document.getElementById(id).textContent
+
+);
+
+
+
+status.textContent="Copied";
+
+
+}
+
+
+
+
+
+
+
+function clearAll(){
+
+
+document.getElementById("input").value="";
+
+document.getElementById("jsonOut").textContent="";
+
+document.getElementById("javaOut").textContent="";
+
+document.getElementById("stringOut").textContent="";
+
+document.getElementById("preview").textContent="No animation";
+
+
+frames=[];
+
+currentFrame=0;
+
+
+status.textContent="Cleared";
+
+
+}
+
+
+
+
+
+
+
+
+document.getElementById("fileInput")
+
+.addEventListener("change",function(e){
+
+
+
+let file=e.target.files[0];
+
+
+
+if(!file)
+
+return;
+
+
+
+document.getElementById("fileName").textContent=
+
+file.name;
+
+
+
+let reader=new FileReader();
+
+
+
+reader.onload=function(event){
+
+
+document.getElementById("input").value=
+
+event.target.result;
+
+
+
+convert();
+
+
+
+};
+
+
+
+reader.readAsText(file);
+
+
+
+});
+
+
+
+</script>
+
+
+</body>
+</html>
